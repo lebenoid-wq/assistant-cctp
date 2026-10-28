@@ -799,7 +799,7 @@ function detectOpts(raw){const V=buildVoc(),tx=nz(raw).split(' ').filter(Boolean
   for(const v of V){let ok=true;for(const w of v.tk){if(!tx.some(x=>x===w||lev1(x,w))){ok=false;break}}if(ok)hit.push(v)}
   const keep=hit.filter(a=>!hit.some(b=>b!==a&&b.tk.length>a.tk.length&&a.tk.every(w=>b.tk.some(y=>y===w||lev1(y,w)))));
   const seen=new Set(),out=[];for(const v of keep){const key=v.tk.map(w=>w.replace(/(?:es|s|e)$/,'')).join(' ');if(seen.has(key))continue;seen.add(key);out.push(v.lab)}
-  return out.filter(l=>!(/lentille/i.test(l)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw))).slice(0,8)}
+  return out.filter(l=>!(/^interrupteurs?$/i.test(l)&&/interrupteurs?\s+(?:sur|du|de)\s+(?:le\s+|l['’]\s*)?(?:driver|alimentation)|multi.?puissance|power\s?-?switch/i.test(raw))).filter(l=>!(/asym/i.test(l)&&/projecteur|\bbm\d|brightmaster|evolve/i.test(raw))).filter(l=>!(/lentille/i.test(l)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw))).slice(0,8)}
 const dn=x=>nz(x).replace(/\b(couvercle|vasque|cache|globe|couverture)\b/g,'diffuseur');
 function realMiss(i,optq){const pr=picksReal(i),tx=dn((C.dl[i]||'')+' '+(C.ds[i]||'')+(C.xopal&&C.xopal[i]?' diffuseur opale':''));const sm=x=>x.replace(/semi[ -]?opale/g,'semiopale');const tx2=sm(tx);return optq.filter(q=>{const qn=dn(q.n);if(/^traversant|^cablage traversant/.test(qn)&&D.cab[C.cab[i]]==='Oui')return false;{const T2=' '+tx2+' ';if(T2.includes(' '+qn+' ')||qn.split(' ').every(w=>T2.includes(' '+w+' ')))return false}if(pr)for(let k=0;k<pr.sp.fam.length;k++){const vi=pr.sp.lists[k].indexOf(pr.vals[k]);if(vi>=0&&nz(pr.sp.attrs[k][vi].lab)===q.n)return false}return true}).map(q=>q.l)}
 const TYPEKW=[[/ruban|bandeau|\bstrip\b|guirlande|n[ée]on flex|\bw\s*\/\s*m\b|lm\s*\/\s*m\b/,'Ruban LED'],[/profil[ée]?s?\b|goulotte alu/,'Profilé LED'],[/pav[ée]|dalle|panneau|panel\b|plaque led|platine led|encastr[ée] (?:type )?\d{2,3}\s?[x×]\s?\d{2,3}/,'Dalle LED'],[/tubulaire|\btubes?\b|\bt8\b|n[ée]on\b/,'Tubulaire'],[/r[ée]glette (?:[ée]tanche|stagna)|[ée]tanche.*r[ée]glette/,'Réglette étanche'],[/r[ée]glette/,'Réglette'],[/downlight|downray|spot encastr|\bspots?\b|encastr[ée] (?:type )?(?:rond|ø)/,'Downlight'],[/hublot|tortue/,'Hublot'],[/applique/,'Applique'],[/highbay|high bay|cloche|gamelle|industriel/,'Highbay'],[/projecteur sur rail|spot sur rail|\brail\b.*(?:spot|projecteur)/,'Projecteur sur rail'],[/rail triphas/,'Rail triphasé'],[/projecteur|floodlight|\bflood\b/,'Projecteur'],[/lustre|\bpendant\b|suspension d[ée]co/,'Suspension'],[/plafonnier/,'Plafonnier'],[/lin[ée]aire/,'Linéaire'],[/[ée]clairage public|lanterne|candélabre|\bm[âa]t\b/,'Éclairage public'],[/alimentation|\bdriver\b|transformateur/,'Alimentation LED']];
@@ -814,7 +814,7 @@ function detectConc(raw){
   const hit=X.bn.filter(x=>n.includes(' '+x.n+' ')||n.includes(' '+x.n.split(' ')[0]+' '));
   let best=null,bs=0;
   for(const h of hit){for(const r of X.b){if(r[ix.br]!==h.b)continue;
-    const toks=nz(r[ix.ga]).split(' ').filter(w=>w.length>=3&&w!==h.n);let sc=0;for(const w of toks)if(n.includes(' '+w+' '))sc+=3;
+    const toks=nz(r[ix.ga]).split(' ').filter(w=>w.length>=3&&w!==h.n&&!/^(led|panel|dalle|spot|tube|lampe|type|plus|pro|gen|new|line)$/.test(w));let sc=0;for(const w of toks)if(n.includes(' '+w+' '))sc+=3;
     const ref=nz(r[ix.ref]);if(ref.length>=4&&n.includes(ref))sc+=10;
     const p=r[ix.lab]?/(\d+(?:[.,]\d+)?)\s*w/i.exec(String(r[ix.des])):null;if(sc>0&&p&&new RegExp('\\b'+p[1].replace('.',',?')+'\\s?w\\b').test(String(raw).toLowerCase().replace(/\./g,',')))sc+=2;
     if(sc>bs){bs=sc;best=r}}}
@@ -830,17 +830,19 @@ function detectSpe(raw){if(!OPT)return[];const V=buildSpe(),t=' '+nz(raw)+' ',ou
   return out.slice(0,5)}
 function parseCCTP(raw){
   let t=' '+raw.toLowerCase().replace(/[  ]/g,' ').replace(/\s+/g,' ')+' ';const o={},notes=[];
-  let best=-1;for(const [re,ty] of TYPEKW){const m=re.exec(t);if(m&&(best<0||m.index<best)){best=m.index;o.type=ty}}
+  let best=-1;const tk_=t.replace(/(?:sur|du|le|la|via|avec|par|au|de|d['’]|l['’])\s*(?:le\s+|l['’]\s*)?(?:driver|alimentation|transformateur)s?/g,' ');for(const [re,ty] of TYPEKW){const m=re.exec(tk_);if(m&&(best<0||m.index<best)){best=m.index;o.type=ty}}
   if(!o.type&&/suspendu|suspension|pendulaire/.test(t)&&!/ruban|bandeau|profil/.test(t)&&!/[ée]tanch|stagn/.test(t)){o.type='Suspension';o.typeWeak=1}
-  if(!o.type&&/[ée]tanch|stagn/.test(t)&&!/(?:profil|ruban|bandeau|alimentation|driver)/.test(t)){o.type='Réglette étanche';o.typeWeak=1}
+  if(!o.type&&/[ée]tanch|stagn/.test(t)&&!/(?:profil|ruban|bandeau)/.test(t)&&!/alimentation|\bdriver\b/.test(t.replace(/(?:sur|du|le|la|via|avec|par|au|de|d['’]|l['’])\s*(?:le\s+|l['’]\s*)?(?:driver|alimentation)s?/g,' '))){o.type='Réglette étanche';o.typeWeak=1}
   let m;
-  {const loose=/asym|lentille/.test(t),ma=(loose?/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°?/:/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°/).exec(t)||/\bas\s?(\d{2,3})\s?[x×]?\s?(\d{2,3})\b/.exec(t);if(ma){o.asy='AS'+ma[1]+ma[2];t=t.replace(ma[0],' ')}
+  {const dm=/(?:double|bi)[\s-]*asym[a-zé]*|asym[a-zé]*\s+double|\b2\s?[x×]\s?60\b/.exec(t);if(dm){o.asy='DAS';t=t.replace(dm[0],' ')}}
+  {const loose=/asym|lentille/.test(t),ma=(loose?/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°?/:/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°/).exec(t)||/\bas\s?(\d{2,3})\s?[x×]?\s?(\d{2,3})\b/.exec(t);if(ma&&o.asy!=='DAS'){o.asy='AS'+ma[1]+ma[2];t=t.replace(ma[0],' ')}
+    else if(o.asy==='DAS'){}
     else if(/lentilles?\s+asym[ée]triques?|asym[ée]trique/.test(t)&&/projecteur|brightmaster|\bbm\d|sport|terrain/.test(t))o.asy='AS';
     const mb=/\b(bm[234])\b/i.exec(raw);if(mb){o.cp=mb[1].toUpperCase();t=t.replace(new RegExp('\\b'+mb[1]+'\\b','i'),' ')}}
   m=/(\d+(?:[.,]\d+)?)\s*w\s*\/\s*m\b/.exec(t);if(m){o.pw=toNum(m[1]);o.permeter=1;t=t.replace(m[0],' ')}
   m=new RegExp(NUMRE+'(?:[.,]\\d+)?\\s*lm\\s*\\/\\s*m\\b').exec(t);if(m){o.flux=toNum(m[1]);o.permeter=1;t=t.replace(m[0],' ')}
   m=/\b(12|24|48|230|220)\s*v(?:\s?(?:dc|cc|ac))?\b/.exec(t);if(m){o.volt=+m[1];t=t.replace(m[0],' ')}
-  m=/(\d{2,3})\s*°(?!\s*[kc])/.exec(t);if(m&&+m[1]<=360){o.angle=+m[1];t=t.replace(m[0],' ')}
+  m=/(\d{2,3})\s*(?:°|degr[ée]s?\b|deg\b)(?!\s*[kc])/.exec(t)||/\b(?:lentilles?|optiques?|faisceau|angle|ouverture)\s+(?:de\s+|d['’]\s*)?(\d{2,3})\b(?!\s*(?:w|k|lm|v|mm|cm|x|×))/.exec(t);if(m&&+m[1]<=360){o.angle=+m[1];t=t.replace(m[1]+(/\d\s*(?:°|degr|deg)/.test(m[0])?m[0].slice(m[1].length):''),' ')}
   m=/(\d+(?:[.,]\d+)?)\s*lm\s*[\/,'’]\s*w/.exec(t);if(m){o.eff=toNum(m[1]);t=t.replace(m[0],' ')}
   m=new RegExp(NUMRE+'(?:[.,]\\d+)?\\s*(?:lm|lumens?)\\b').exec(t);
   if(m&&o.flux==null){o.flux=toNum(m[1]);t=t.replace(m[0],' ')}
@@ -889,7 +891,7 @@ function parseCCTP(raw){
   m=/\b(\d)0000\s*°?\s*k\b/.exec(t);if(m){o.cct=+m[1]*1000;notes.push('température lue '+o.cct+' K (« '+m[0].trim()+' » semble une coquille)')}
   else{m=/(\d)\s?(\d{3})\s*°?\s*k\b/.exec(t);if(m)o.cct=+(m[1]+m[2])}
   if(o.cct==null){if(/blanc neutre/.test(t))o.cct=4000;else if(/blanc chaud/.test(t))o.cct=3000;else if(/blanc froid/.test(t))o.cct=6500}
-  if(/\bdali\b/.test(t))o.grad='DALI';else if(/1\s?-\s?10\s?v/.test(t))o.grad='1-10V';else if(/gradable|dimmable|variable/.test(t))o.grad='any';
+  if(/\bdali\b/.test(t))o.grad='DALI';else if(/1\s?-\s?10\s?v/.test(t))o.grad='1-10V';else if(/power\s?-?switch|multi.?puissances?|puissances? s[ée]lectionnables?|interrupteurs?\s+(?:sur|du|de)\s+(?:le\s+|l['’]\s*)?(?:driver|alimentation)/.test(t))o.grad='Power Switch';else if(/\bnon\s+(?:gradable|dimmable|variable)|\bsans gradation/.test(t))o.grad='Non';else if(/gradable|dimmable|variable/.test(t))o.grad='any';
   m=new RegExp('[øØ⌀]\\s*'+NUMD+'\\s*[x×]\\s*'+NUMD).exec(t);if(m){o.dia=toNum(m[1]);o.hgt=toNum(m[2]);t=t.replace(m[0],' ')}
   m=new RegExp(NUMD+'\\s*[x×]\\s*[øØ⌀]\\s*'+NUMD).exec(t);if(m){o.len=toNum(m[1]);o.dia=toNum(m[2]);t=t.replace(m[0],' ')}
   m=new RegExp(NUMD+'\\s*[x×]\\s*'+NUMD+'(?:\\s*[x×]\\s*(\\d+))?').exec(t);
@@ -925,7 +927,7 @@ function buildCctp(){
     else if(kind==='selx'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),['Suspension','Encastré','Saillie','Sur rail','Colliers'].map(t=>el('option',{value:t,text:t})))}
     else if(kind==='self'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),['circulaire','carrée','rectangulaire'].map(t=>el('option',{value:t,text:t})))}
     else if(kind==='selb'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisé)'}),el('option',{value:'Oui',text:'Oui'}))}
-    else if(kind==='selg'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),el('option',{value:'DALI',text:'DALI'}),el('option',{value:'1-10V',text:'1-10V'}),el('option',{value:'any',text:'Gradable (tous types)'}))}
+    else if(kind==='selg'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),el('option',{value:'DALI',text:'DALI'}),el('option',{value:'1-10V',text:'1-10V'}),el('option',{value:'any',text:'Gradable (tous types)'}),el('option',{value:'Power Switch',text:'Power Switch (multi-puissance)'}),el('option',{value:'Non',text:'Non gradable'}))}
     else c=el('input',{id:'cc_'+k,type:'text',inputmode:kind==='t'?'text':'decimal'});
     c.addEventListener(kind==='n'||kind==='t'?'input':'change',()=>{clearTimeout(tmr);tmr=setTimeout(cctpMatch,200)});
     const lb=el('label',{class:'f'},el('span',{text:l}),c);lb.dataset.k=k;box.append(lb);
@@ -958,7 +960,7 @@ function scoreRow(c,a){
   const add=(k,s,gap)=>{sw+=W[k];ss+=W[k]*s;if(s<0.999&&gap)gaps.push(gap)};
   if(c.type){const NEAR=['Tubulaire','Réglette étanche','Linéaire','Réglette'];const s=a.type===c.type?1:c.typeWeak?(c.type==='Suspension'?(a.type==='Linéaire'?0.6:a.type==='Highbay'?0.5:0):a.type==='Linéaire'?0.6:a.type==='Tubulaire'?0.45:(TCOMP[c.type]||[]).includes(a.type)?0.3:0):(NEAR.includes(c.type)&&NEAR.includes(a.type))?0.85:(TCOMP[c.type]||[]).includes(a.type)?0.55:0;add('type',s,'type '+a.type)}
   if(c.speq&&c.speq.length){const mis=a.speMiss||c.speq.map(q=>q.l),n=c.speq.length;add('spe',a.speAv?0.9:(n-mis.length)/n,a.speAv?'option spécifique à la carte (à confirmer avec SFEL) : '+c.speq.map(q=>q.l).join(', '):'option spécifique « '+mis.join(', ')+' » absente')}
-  if(c.asy){const cd=String(a.code||'').toUpperCase(),as=/AS\d{5}|-AS\d/.test(cd);add('asy',cd.includes(c.asy)?1:(c.asy==='AS'&&as)?1:as?0.4:0,'lentille '+(as?'asymétrique autre':'symétrique'))}
+  if(c.asy){const cd=String(a.code||'').toUpperCase(),tx=String(a.txt||'').toLowerCase(),dbl=/\d(?:B?DAS)\d|double asym|2x60/i.test(cd+' '+tx),as=/AS\d{3,5}|-AS\d|\dB?DAS\d|\dBAS\d|\basym/i.test(cd+' '+tx);if(c.asy==='DAS')add('asy',dbl?1:as?0.3:0,dbl?'double asymétrique':as?'asymétrique simple':'symétrique');else add('asy',cd.includes(c.asy)?1:(c.asy==='AS'&&as)?(dbl?0.8:1):as?0.4:0,'lentille '+(as?'asymétrique autre':'symétrique'))}
   if(c.cp){add('cp',String(a.code||'').toUpperCase().startsWith(c.cp)?1:0,'gamme '+String(a.code||'').slice(0,3))}
   if(c.brand){add('brand',nz(a.brand)===nz(c.brand)?1:0,'marque '+a.brand)}
   if(c.gam){const L=String(c.gam).split(/;/).map(x=>nz(x)).filter(Boolean),g=nz(a.gamme);add('gam',L.some(x=>g===x)?1:L.some(x=>g.startsWith(x+' ')||x.startsWith(g+' '))?0.6:0,'gamme '+a.gamme)}
@@ -979,7 +981,7 @@ function scoreRow(c,a){
   if(c.ugr){const s=a.ugr>0?(a.ugr<=c.ugr?1:0):0.4;add('ugr',s,'UGR '+(a.ugr||'n.c.'))}
   if(c.optq&&c.optq.length){W.opts=14+12*Math.min(3,c.optq.length);const miss=a.optMiss||c.optq.map(q=>q.l);add('opts',(c.optq.length-miss.length)/c.optq.length,miss.length?miss.map(x=>'option « '+x+' » absente').join(' ; '):null)}
   if(c.volt){const tx=a.txt||'';const s=new RegExp('\\b'+c.volt+'\\s*v').test(tx)?1:/\b\d{2,3}\s*v(dc|ac)?\b/.test(tx)?0:0.5;add('volt',s,s===0.5?'tension non précisée':'tension différente')}
-  if(c.angle){const mm=/(\d{2,3})\s*°/.exec(a.txt||'');const av=a.ang>0?a.ang:mm?+mm[1]:0;const d=Math.abs(av-c.angle);const s=av?(d<=10?1:d<=25?0.5:0):0.5;add('angle',s,av?'angle '+av+'°':'angle non précisé')}
+  if(c.angle){const mm=/(\d{2,3})\s*°/.exec(a.txt||'');const av=a.ang>0?a.ang:mm?+mm[1]:0;const d=Math.abs(av-c.angle);const s=av?(d<=2?1:d<=10?0.4:0):0.5;add('angle',s,av?'angle '+av+'°':'angle non précisé')}
   if(c.fix){const F={Suspension:{suspension:1,'filins 2m (inclus)':0.8,'tiges filetées':0.6},Encastré:{'encastré':1,griffes:1,compression:1},Saillie:{plafonnier:1,'patère pour fixation plafonnier':1,vis:0.7,'vis M4 en 3 points':0.7,'vis M4 en 2 points':0.7,'posé par gravité':0.6},'Sur rail':{'fixation sur rail':1},Colliers:{colliers:1}}[c.fix]||{};const fv=a.fixv;const dl=a.type==='Dalle LED'&&c.fix==='Saillie'&&fv==='encastré';const s=dl?0.5:fv?(F[fv]!=null?F[fv]:0):0.4;add('fix',s,dl?'pose encastrée (cadre apparent en option)':'pose : '+(fv||'n.c.'))}
   if(c.forme){const rd=c.forme==='circulaire',s=a.formev?(a.formev===c.forme?1:(rd&&/cylindr|d[ée]corati/.test(a.formev))?0.5:0):0.5;add('forme',s,'forme '+(a.formev||'n.c.'));if(s===0)fcap=1}
   if(c.dw){const ws=c.dw.split(';').map(x=>nz(x)).filter(Boolean);const dt=dn((a.dtx||'')+' '+(a.txt||''));const miss=ws.filter(w=>!dt.includes(w)&&!(w.endsWith('s')&&dt.includes(w.slice(0,-1))));add('dw',(ws.length-miss.length)/ws.length,miss.length?'désignation sans : '+miss.join(', '):null)}
@@ -995,7 +997,7 @@ function scoreRow(c,a){
   if(c.drv&&a.drv>=0){add('drv',a.drv?1:0,'driver non inclus (à commander séparément)')}
   if(c.cmap){const r=c.cmap.get(a.code);let s,g=null;if(r){s=Math.max(0.5,(r[8]||0)/100);g='équivalent de '+String(c.conc).split(' — ')[0].split(' (')[0]+' : '+r[7]+' '+r[8]+' %'}else if(c.cgam.has(a.brand+'|'+a.gamme)){s=0.6;g='même gamme qu\'un équivalent du concurrent'}else{s=0.1;g='pas listé comme équivalent du concurrent'}add('conc',s,g)}
   if(c.hgt){const s=sRel(a.hgt,c.hgt,0.05,0.4);add('hgt',s,'hauteur '+(a.hgt||'n.c.')+' mm')}
-  if(c.grad){const g=String(a.grad||'');const s=c.grad==='any'?(g&&g!=='Non'?1:0):(g.includes(c.grad)?1:0);add('grad',s,'gradation '+(g||'n.c.'))}
+  if(c.grad){const g=String(a.grad||'');const s=c.grad==='any'?(g&&g!=='Non'?1:0):c.grad==='Non'?(!g||g==='Non'?1:0):(g.includes(c.grad)?1:0);add('grad',s,'gradation '+(g||'n.c.'))}
   let sc=sw?Math.round(ss/sw*100):0;if(fcap&&sc>55)sc=55;if(gaps.length&&sc>99)sc=99;return {score:sc,gaps};
 }
 function diaOf(i){if(C.d[i])return C.d[i];const m=/(?:^|[ \/(])(?:d|ø)\s?(\d{2,3})(?=[ \/)]|$)/i.exec(C.ds[i]||'');return m?+m[1]:0}
