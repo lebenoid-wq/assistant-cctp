@@ -1,0 +1,1024 @@
+<meta charset="utf-8">
+<title>Catalogue produits groupe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Atelier d'éclairagiste : bandeau encre profond, tuiles à pictogrammes, cartes produit à code couleur par marque. */
+:root{
+  --bg:#f3f3ef; --panel:#fff; --fg:#181c22; --muted:#5d6672; --line:#dedfd8; --accent:#1b5fb0; --accent-fg:#fff;
+  --soft:#e6eef8; --zebra:#fafaf6; --ok:#23744a; --warn:#9a6200; --bad:#b0342a; --okbg:#e3f3ea; --warnbg:#fbf0d8; --badbg:#f9e4e1;
+  --sfel:#5a3d9e; --integ:#08746f; --leb:#a0560f; --hero:#10233d; --hero-fg:#f0f4fa; --hero-mut:#a9b8cc;
+  --f-body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151a; --panel:#1b1f26; --fg:#e8eaed; --muted:#98a1ad; --line:#2c323a; --accent:#6aa8ee; --accent-fg:#0d1722;
+  --soft:#1d2a3b; --zebra:#181c21; --ok:#5fc08a; --warn:#e0a640; --bad:#ef7d72; --okbg:#173225; --warnbg:#3a2e12; --badbg:#3b1d1a;
+  --sfel:#aa90f2; --integ:#4cc7bf; --leb:#e5a061; --hero:#0b1626; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151a; --panel:#1b1f26; --fg:#e8eaed; --muted:#98a1ad; --line:#2c323a; --accent:#6aa8ee; --accent-fg:#0d1722;
+  --soft:#1d2a3b; --zebra:#181c21; --ok:#5fc08a; --warn:#e0a640; --bad:#ef7d72; --okbg:#173225; --warnbg:#3a2e12; --badbg:#3b1d1a;
+  --sfel:#aa90f2; --integ:#4cc7bf; --leb:#e5a061; --hero:#0b1626; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1500px;margin:0 auto}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:-.02em}
+h2{font-size:15px;margin:0 0 8px;font-weight:650}
+button,select,input{font:inherit}
+button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hero{margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:22px max(16px,env(safe-area-inset-left,0px)) 20px;background:var(--hero);color:var(--hero-fg);background-image:radial-gradient(ellipse 60% 120% at 92% -20%,rgba(255,206,120,.22),transparent 60%),repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 1px,transparent 1px 22px)}
+.hero .wrap{display:grid;gap:14px}
+.hero p{margin:0;color:var(--hero-mut);font-size:13.5px}
+.kpis{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:flex-end}
+.kpi b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums;font-weight:650}
+.kpi span{font-size:12px;color:var(--hero-mut)}
+.bar3{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(255,255,255,.12)}
+.bar3 i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--hero-mut)}
+.legend em{font-style:normal;display:inline-flex;align-items:center;gap:6px}.legend em::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+nav.tabs{display:flex;gap:2px;margin:16px 0 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 16px;color:var(--muted);cursor:pointer;font-weight:550;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+.tiles{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:thin}
+.tile{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:5px 12px;text-align:center;cursor:pointer;color:var(--fg);display:inline-flex;gap:6px;align-items:baseline;white-space:nowrap}
+.gen{color:var(--muted)}.tablewrap td.b-SFEL{color:var(--sfel)}.tablewrap td.b-Integratech{color:var(--integ)}.tablewrap td.b-Lébénoïd{color:var(--leb)}
+.tile .n{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tile .t{font-size:12.5px;font-weight:600}
+.tile[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.tile[aria-pressed="true"] .n{color:var(--accent-fg)}
+.tile.zero{opacity:.45}
+.fhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.grp{margin:12px 0 6px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:650}
+.rowf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 12px}
+.rowf.wide{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+label.f select,label.f input{font-size:13px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px 8px;min-width:0;width:100%}
+label.f.on select,label.f.on input{border-color:var(--accent);background:var(--soft)}
+.btn{font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;padding:7px 13px;cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--panel);color:var(--muted);padding:6px 12px;cursor:pointer;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin:14px 0 10px}
+.bar .n{font-weight:650;font-size:15px}
+.note{color:var(--muted);font-size:12.5px}
+/* cartes */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--bc,var(--line));border-radius:8px;padding:12px;cursor:pointer;display:grid;gap:8px;min-width:0;text-align:left;color:var(--fg)}
+.card:hover{border-color:var(--accent);border-top-color:var(--bc)}
+.card .top{display:flex;gap:10px;align-items:flex-start}
+.card .ico{flex:0 0 46px;height:46px;border-radius:8px;background:var(--soft);display:grid;place-items:center;color:var(--bc)}
+.card .ico svg{width:30px;height:30px}
+.card .ref{font-family:var(--f-mono);font-size:12.5px;font-weight:600;overflow-wrap:anywhere}
+.card .gam{font-size:11.5px;color:var(--muted)}
+.card .des{font-size:12.5px;color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.met{font-size:11px;color:var(--muted)}.met b{display:block;font-size:14px;color:var(--fg);font-variant-numeric:tabular-nums}
+.meter{height:4px;border-radius:2px;background:var(--line);margin-top:3px;overflow:hidden}.meter i{display:block;height:100%;background:var(--accent)}
+.badges{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.bd{font-size:11px;padding:1px 7px;border-radius:10px;background:var(--bg);border:1px solid var(--line);color:var(--fg);white-space:nowrap}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.25);vertical-align:-1px;margin-right:4px}
+.pos{font-size:11px;font-weight:650;padding:1px 8px;border-radius:10px}
+.pos.Prescription{background:var(--soft);color:var(--accent)}.pos.Variante{background:var(--okbg);color:var(--ok)}.pos.mix{background:var(--warnbg);color:var(--warn)}
+.lk{font-size:11.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;overflow-wrap:anywhere}
+.lvl{font-weight:650}.lvl-Équivalent{color:var(--ok)}.lvl-Proche{color:var(--warn)}.lvl-Partiel{color:var(--bad)}
+.chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:650;border:1px solid currentColor}
+.chip.SFEL{color:var(--sfel)}.chip.Integratech{color:var(--integ)}.chip.Lébénoïd{color:var(--leb)}
+/* tableau */
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:72vh}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th{position:sticky;top:0;background:var(--panel);text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:650;color:var(--muted);z-index:1}
+td{padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+tbody tr:nth-child(even){background:var(--zebra)}tbody tr{cursor:pointer}tbody tr:hover{background:var(--soft)}
+td.mono{font-family:var(--f-mono);font-size:12px}td.des{white-space:normal;min-width:260px;max-width:380px}td.num{text-align:right;font-variant-numeric:tabular-nums}td.long{white-space:normal;min-width:240px;max-width:420px}
+.more{display:flex;justify-content:center;margin:14px 0}
+/* fiche */
+.drawer{position:fixed;inset:0;background:rgba(5,10,20,.55);display:flex;justify-content:flex-end;z-index:30}
+.drawer>div{background:var(--bg);width:min(780px,100%);height:100%;overflow:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 48px 18px;border-left:1px solid var(--line)}
+.dh{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
+.dh .big{width:64px;height:64px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--bc);flex:0 0 64px}.dh .big svg{width:42px;height:42px}
+.specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:12px 0}
+.spec{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px}.spec small{display:block;color:var(--muted);font-size:11px}.spec b{font-size:16px;font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:minmax(120px,210px) 1fr;gap:4px 14px;font-size:13px;margin:0}.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}
+.refchip{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:12px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--bc,var(--line));border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--fg);margin:0 6px 6px 0}
+.refchip small{font-family:var(--f-body);color:var(--muted);font-size:11px}
+/* configurateur */
+.cfg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:16px;align-items:start}
+@media (max-width:980px){.cfg{grid-template-columns:1fr}}
+.steps{display:grid;gap:12px}
+.step h2{display:flex;align-items:center;gap:8px}.step h2 span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-size:12px}
+.gtiles{display:flex;flex-wrap:wrap;gap:6px}
+.gt{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12.5px;font-weight:550}
+.gt small{color:var(--muted);font-weight:400;margin-left:4px}
+.gt[aria-pressed="true"]{background:var(--sfel);border-color:var(--sfel);color:#fff}.gt[aria-pressed="true"] small{color:#e9e2ff}
+.mlist{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.mrow{display:flex;justify-content:space-between;gap:10px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg);padding:6px 10px;cursor:pointer;text-align:left;font-size:12.5px}
+.mrow:hover{background:var(--soft)}.mrow[aria-pressed="true"]{background:var(--soft);font-weight:650}
+.mrow b{font-family:var(--f-mono);font-weight:550}.mrow span{color:var(--muted);font-size:12px}
+.fam{margin:0 0 12px}.fam .grp{margin:0 0 5px}
+.opt{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;padding:5px 9px;cursor:pointer;text-align:left;font-size:12.5px;max-width:100%}
+.opt b{font-family:var(--f-mono);font-weight:550;margin-right:6px}.opt small{color:var(--muted)}
+.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.opt[aria-pressed="true"] small{color:var(--accent-fg);opacity:.85}
+.opt.unseen{border-style:dashed}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.result{position:sticky;top:8px;border:2px solid var(--accent);border-radius:10px;background:var(--panel);padding:14px}
+.result .big{font-family:var(--f-mono);font-size:19px;font-weight:600;overflow-wrap:anywhere;margin:6px 0 10px}
+.result .big i{font-style:normal;padding:0 1px;border-radius:3px}
+.st{display:inline-block;font-weight:650;font-size:12.5px;padding:3px 10px;border-radius:12px}
+.st.ok{background:var(--okbg);color:var(--ok)}.st.mid{background:var(--warnbg);color:var(--warn)}.st.no{background:var(--badbg);color:var(--bad)}
+.hidden{display:none!important}
+textarea{width:100%;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical;margin-top:8px}
+.score{display:inline-block;min-width:44px;text-align:center;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--soft);color:var(--accent)}.score.hi{background:var(--okbg);color:var(--ok)}.score.lo{background:var(--warnbg);color:var(--warn)}
+pre.txt{white-space:pre-wrap;font-family:var(--f-mono);font-size:12px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;max-height:340px;overflow:auto}
+#load{padding:60px 0;text-align:center;color:var(--muted)}progress{width:260px}
+@media (max-width:560px){.kv{grid-template-columns:1fr}.kv dt{margin-top:6px}h1{font-size:21px}}
+@media (prefers-reduced-motion:no-preference){.card,.tile,.opt{transition:border-color .12s,background .12s}}
+</style>
+
+<header class="hero"><div class="wrap">
+  <div><h1>Catalogue produits groupe</h1><p id="sub">Lébénoïd · Integratech · SFEL 2026</p></div>
+  <div class="kpis" id="kpis"></div>
+  <div><div class="bar3" id="bar3"></div><div class="legend" id="legend"></div></div>
+</div></header>
+
+<div class="wrap">
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="cctp">Coller un CCTP</button>
+  <button role="tab" aria-selected="false" data-tab="search">Recherche produits</button>
+  <button role="tab" aria-selected="false" data-tab="conc">Recherche par concurrent</button>
+  <button role="tab" aria-selected="false" data-tab="cfg">Construire une référence SFEL</button>
+  <button role="tab" aria-selected="false" data-tab="opts">Options du catalogue SFEL</button>
+</nav>
+<div id="load"><p>Chargement du catalogue…</p><progress id="prog" max="100" value="5"></progress></div>
+
+<main id="tab-cctp" class="hidden">
+  <section class="panel" id="cctp" style="margin-bottom:12px">
+    <div class="fhead"><h2 style="margin:0">Coller un CCTP</h2><span class="note">Le texte est analysé ici, dans la page : seuls les critères utiles sont retenus.</span></div>
+    <textarea id="cctpTxt" rows="5" placeholder="ex. Luminaire tubulaire LED 1200mm IP65 IK10 35W LED - 4196lm - IRC > 80 - 4000°K"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn pri" id="cctpGo" type="button">Trouver le produit</button><button class="btn" id="cctpClear" type="button">Effacer</button></div>
+    <div class="rowf" id="cctpPills"></div>
+    <div id="cctpSum"></div><div id="cctpRes"></div>
+  </section>
+</main>
+
+<main id="tab-search" class="hidden">
+  <div class="tiles" id="tiles" aria-label="Types de produit"></div>
+  <section class="panel" aria-label="Critères">
+    <div class="fhead"><h2 style="margin:0">Critères</h2><div style="display:flex;gap:8px"><button class="btn" id="toggleAdv">Masquer les critères</button><button class="btn" id="reset">Tout effacer</button></div></div>
+    <div id="adv">
+      <p class="grp">Produit</p><div class="rowf wide" id="r1"></div>
+      <p class="grp">Performances</p><div class="rowf" id="r2"></div>
+      <p class="grp">Dimensions</p><div class="rowf" id="r3"></div>
+      <p class="grp">Optique, corps, couleur, câblage, détection</p><div class="rowf wide" id="r4"></div>
+      <p class="grp hidden" id="gopt">Options du catalogue SFEL pour cette gamme</p><div class="rowf wide hidden" id="r5"></div>
+    </div>
+  </section>
+  <div class="bar"><div><span class="n" id="count"></span> <span class="note" id="hint"></span></div>
+    <div class="seg" role="group" aria-label="Affichage"><button id="vTable" aria-pressed="true">Tableau</button><button id="vCards" aria-pressed="false">Cartes</button></div></div>
+  <div class="cards hidden" id="cards"></div>
+  <div class="tablewrap" id="twrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  <div class="more"><button class="btn" id="more">Afficher plus</button></div>
+</main>
+
+<main id="tab-conc" class="hidden">
+  <p class="note" style="margin:0 0 10px">Quels produits du groupe répondent à un produit concurrent ? Choisissez la marque puis le produit, ou saisissez une référence (fabricant, Rexel, Sonepar, EAN). Les réponses sont classées du plus proche au moins proche.</p>
+  <section class="panel"><div class="rowf wide">
+    <label class="f">1. Marque concurrente<select id="cb"></select></label>
+    <label class="f">Filtrer la liste<input id="cq" type="text" placeholder="mot de la désignation"></label>
+    <label class="f">2. Produit concurrent<select id="cp"></select></label>
+    <label class="f">ou : référence concurrente<input id="cr" type="text" placeholder="fabricant, Rexel, Sonepar, EAN"></label>
+    <label class="f">Marque du groupe (facultatif)<select id="cg2"></select></label>
+  </div></section>
+  <div id="cmsg" class="note" style="margin:10px 0"></div>
+  <div id="cout"></div>
+</main>
+
+<main id="tab-cfg" class="hidden">
+  <p class="note" style="margin:0 0 12px">La référence est assemblée comme dans le catalogue SFEL : modèle de base, puis les codes d'options dans l'ordre observé sur les références existantes de la gamme.</p>
+  <div class="cfg">
+    <div class="steps">
+      <section class="panel step"><h2><span>1</span>Gamme</h2><div class="gtiles" id="cg"></div></section>
+      <section class="panel step"><h2><span>2</span>Modèle de base</h2>
+        <label class="f" style="margin-bottom:8px">Filtrer les modèles<input id="cmq" type="text" placeholder="ex. 306 ou 1200"></label><div class="mlist" id="cm"></div></section>
+      <section class="panel step"><h2><span>3</span>Options</h2><div id="co"></div></section>
+      <section class="panel step hidden" id="cspeBox"><h2><span>4</span>Options spécifiques et accessoires</h2><div id="cspe"></div></section>
+    </div>
+    <aside class="result" id="cres" aria-live="polite"></aside>
+  </div>
+</main>
+
+<main id="tab-opts" class="hidden">
+  <p class="note" style="margin:0 0 10px">Options standards, options spécifiques et accessoires du catalogue SFEL 2026, gamme par gamme. Libellés lus automatiquement dans le PDF.</p>
+  <div class="rowf wide"><label class="f">Gamme SFEL<select id="og"></select></label></div>
+  <div id="ocontent"></div>
+  <h2 style="margin-top:22px">Accessoires généraux (catalogue pages 68 à 85)</h2><div id="ogen"></div>
+</main>
+</div>
+<div id="drawer" class="drawer hidden"><div id="dbody"></div></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const el=(t,a,...k)=>{const e=document.createElement(t);if(a)for(const x in a){if(x==='class')e.className=a[x];else if(x==='text')e.textContent=a[x];else if(x==='html')e.innerHTML=a[x];else if(x.startsWith('on'))e.addEventListener(x.slice(2),a[x]);else e.setAttribute(x,a[x])}k.flat(Infinity).forEach(c=>c!=null&&e.append(c));return e};
+let FTSET=null,C=null,LINKS=null,OPT=null,FILES=null,N=0,N0=0,CODEIDX=null;const D={};
+async function getJSON(u){if(window.__D&&window.__D[u])return window.__D[u];let r;try{r=await fetch(u)}catch(e){throw new Error(location.protocol==='file:'?'ouverture directe du fichier : utiliser la version hors ligne (dossier avec data/*.js)':e.message)}if(!r.ok)throw new Error(u+' '+r.status);return r.json()}
+const prog=v=>{const p=$('#prog');if(p)p.value=v};
+const BC={SFEL:'var(--sfel)',Integratech:'var(--integ)','Lébénoïd':'var(--leb)'};
+/* ---------- pictogrammes ---------- */
+const P={
+ 'Réglette étanche':'<rect x="3" y="19" width="42" height="11" rx="5.5"/><path d="M9 24.5h30"/><path d="M24 8c-3 4-4 6-4 8a4 4 0 008 0c0-2-1-4-4-8z" transform="translate(0 -1) scale(.8) translate(6 0)"/>',
+ 'Réglette':'<rect x="3" y="20" width="42" height="9" rx="2"/><path d="M9 24.5h30M10 29v4M38 29v4"/>',
+ 'Linéaire':'<rect x="4" y="27" width="40" height="6" rx="3"/><path d="M12 27V10M36 27V10M9 10h6M33 10h6"/>',
+ 'Tubulaire':'<path d="M8 17h32a3 7 0 010 14H8a3 7 0 010-14z"/><ellipse cx="8" cy="24" rx="3" ry="7"/><path d="M14 17V9M34 17V9"/>',
+ 'Dalle LED':'<rect x="7" y="7" width="34" height="34" rx="2"/><rect x="13" y="13" width="22" height="22"/><path d="M24 13v22M13 24h22"/>',
+ 'Suspension':'<path d="M24 3v16M10 39c0-11 6-20 14-20s14 9 14 20z"/><path d="M18 39v3M30 39v3"/>',
+ 'Projecteur sur rail':'<path d="M4 6h40M24 6v8"/><rect x="14" y="14" width="20" height="12" rx="3"/><path d="M16 30l-4 10M24 30v11M32 30l4 10"/>',
+ 'Projecteur':'<rect x="12" y="9" width="24" height="18" rx="3"/><path d="M9 27h30M24 27v7M16 40h16M24 34l-8 6M24 34l8 6"/><path d="M14 14h20" />',
+ 'Highbay':'<path d="M24 3v9M9 31c0-9 7-19 15-19s15 10 15 19z"/><path d="M13 36h22M16 41h16"/><path d="M17 18l-2 13M24 15v16M31 18l2 13"/>',
+ 'Downlight':'<path d="M3 10h42"/><path d="M13 10v6h22v-6"/><path d="M16 16l-6 22M24 16v22M32 16l6 22"/>',
+ 'Plafonnier':'<path d="M3 11h42"/><path d="M8 11c0 11 7 17 16 17s16-6 16-17"/><path d="M14 36v4M24 38v4M34 36v4"/>',
+ 'Applique':'<path d="M9 4v40"/><path d="M9 16h6c10 0 16 5 16 13H15"/><path d="M33 37l4 5M39 31l5 3"/>',
+ 'Hublot':'<circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="12"/><path d="M24 12v-4M24 40v-4M12 24H8M40 24h-4"/>',
+ 'Ruban LED':'<path d="M3 30c6-14 10-14 15 0s9 14 15 0 8-10 12-5"/><circle cx="9" cy="22" r="1.6"/><circle cx="20" cy="27" r="1.6"/><circle cx="31" cy="30" r="1.6"/><circle cx="41" cy="23" r="1.6"/>',
+ 'Alimentation LED':'<rect x="6" y="14" width="36" height="20" rx="3"/><path d="M14 22h8M14 27h14M36 20v8M4 20h2M4 28h2M42 20h2M42 28h2"/>',
+ 'Accessoire':'<circle cx="24" cy="24" r="7"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.5 10.5l4 4M33.5 33.5l4 4M37.5 10.5l-4 4M14.5 33.5l-4 4"/>',
+ 'Éclairage public':'<path d="M14 44V10c0-4 3-6 7-6h14"/><path d="M35 4v6"/><path d="M29 10h12l-3 7H32z"/><path d="M10 44h12"/>',
+ 'Profilé LED':'<path d="M7 12v26h34V12"/><path d="M12 12v21h24V12"/><path d="M15 38h18" stroke-dasharray="2 3"/>',
+ 'Rail triphasé':'<path d="M3 16h42M3 24h42M3 32h42"/><path d="M14 12v24M34 12v24"/>',
+ 'Éclairage de tableaux':'<rect x="8" y="22" width="32" height="22" rx="1"/><path d="M12 26h24v14H12z"/><path d="M14 12h20M24 12v8M16 8h16"/>',
+ '_':'<path d="M24 5a13 13 0 00-6 24v6h12v-6a13 13 0 00-6-24z"/><path d="M19 40h10M21 44h6"/>'
+};
+function icon(t){return '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[t]||P._)+'</svg>'}
+const SW={'Blanc':'#f2f2ee','Noir':'#23262b','Gris':'#8b9299','Aluminium / argent':'#c3c8cd','Bleu':'#2f6fd0','Translucide / transparent':'#dfeef5'};
+function cctColor(k){const t=Math.min(1,Math.max(0,(k-2200)/4300));return 'hsl('+(38+t*172)+',92%,'+(58+t*6)+'%)'}
+const fr=n=>n.toLocaleString('fr-FR');
+/* ---------- chargement ---------- */
+/* ---------- couche virtuelle : combinaisons d'options du catalogue SFEL (calculées à la demande) ---------- */
+const KEYS=['brand','gamme','type','h','w','l','d','ip','ik','ipt','ikt','pw','flux','eff','cct','irc','grad','col','det','cab','pos','opt','matd','matc','ugr'];
+const SPIRC=new Map();let SPECS=[],SPG=new Map(),VT=0,SLOTMAX=4000,VSEG=[],VTOT=0;
+const SYN={bandeau:'ruban',bandeaux:'ruban',strip:'ruban',rubans:'ruban',led:'led',tube:'tubulaire',tubes:'tubulaire',t8:'tubulaire',neon:'tubulaire',néon:'tubulaire',panel:'dalle',panneau:'dalle',pavé:'dalle',pave:'dalle',dalles:'dalle',spot:'downlight',spots:'downlight',downray:'downlight',cloche:'highbay',gamelle:'highbay',lanterne:'public',candélabre:'public',flood:'projecteur',floodlight:'projecteur',profil:'profilé',profils:'profilé',driver:'alimentation',transformateur:'alimentation',alim:'alimentation',luminaire:'',luminaires:''};
+const SEP='\u0001',ALIM={B1:'Non',B4:'DALI',B8:'DSI'};
+const idxIn=(arr,v)=>{let k=arr.indexOf(v);if(k<0){arr.push(v);k=arr.length-1}return k};
+const baseFam=n=>n.split('#')[0];
+function slotAttr(f,c,l){
+  const lab=f==='Autre'?'':c===''?(['Étanchéité','Cellule','Classe électrique'].includes(f)?((l[f]&&l[f][''])||''):''):((l[f]&&l[f][c])||c);
+  const a={lab,cct:null,ip:null,grad:null,det:null};if(!lab&&c===''&&['Optique','Embouts','Fixations colliers','Traitement embouts et colliers'].includes(f)&&l[f]&&l[f][''])a.alt=l[f][''];
+  if(f==='Température de couleur'){const m=/(\d[\d ]*)\s*K/.exec(lab);if(m)a.cct=m[1].replace(/ /g,'');if(/IRC > 90/.test(lab))a.irc=90}
+  else if(f==='Étanchéité'){const m=/^IP(\d+)/.exec(lab);if(m)a.ip=+m[1]}
+  else if(f==='Cellule'){a.det=c?lab:''}
+  else if(f==='Alimentation'&&ALIM[c])a.grad=ALIM[c];
+  return a;
+}
+const DIGS='0123456789abcdefghijklmnopqrstuvwxyz';
+function initVirtual(GJ){
+  let gid=0;
+  for(const g in GJ){const {s,l,x}=GJ[g],fb=new Set();
+    for(const [a,va,b,vb] of x){fb.add(a+SEP+va+SEP+b+SEP+vb);fb.add(b+SEP+vb+SEP+a+SEP+va)}
+    for(const [p,ex,order,lists,n,excl,hid] of s){
+      const fam=order.map(baseFam),L=order.length;
+      const sp={g,p,ex,order,lists,n,l,gid:gid++,fam,L,attrs:lists.map((vals,k)=>vals.map(c=>slotAttr(fam[k],c,l))),sorted:lists.map((v,k)=>{const h=(hid||[]).filter(q=>q[0]===k).flatMap(q=>q[1]);return v.concat(h).filter((x,i,ar)=>x&&ar.indexOf(x)===i).sort((a,b)=>b.length-a.length)})};
+      sp.irc90=lists.some(l2=>l2.some(v=>/^H9\d\d$/.test(v)));if(sp.irc90)SPIRC.set(ex,90);
+      // paires interdites (par indices) et créneaux contraints
+      sp.fbn=Array.from({length:L},()=>new Array(L).fill(null));const inv=new Set();
+      for(let i=0;i<L;i++)for(let j=i+1;j<L;j++)for(let a=0;a<lists[i].length;a++){const va=lists[i][a];if(!va)continue;for(let b=0;b<lists[j].length;b++){const vb=lists[j][b];if(vb&&fb.has(order[i]+SEP+va+SEP+order[j]+SEP+vb)){(sp.fbn[i][j]||(sp.fbn[i][j]=new Set())).add(a*64+b);inv.add(i);inv.add(j)}}}
+      sp.cs=[...inv].sort((x,y)=>x-y);sp.fr=[];for(let k=0;k<L;k++)if(!inv.has(k))sp.fr.push(k);
+      sp.prev=Array.from({length:L},(_,i)=>{const r=[];for(let j=0;j<i;j++)if(sp.fbn[j][i])r.push(j);return r});
+      sp.excl=(excl||[]).map(t=>Array.from(t,ch=>parseInt(ch,36)));
+      sp.exclSet=new Set(sp.excl.map(t=>sp.p+t.map((v,k)=>lists[k][v]).join('')));
+      sp.all=lists.map(l2=>l2.map((_,i)=>i));
+      SPECS.push(sp);VT+=n;if(!SPG.has(g))SPG.set(g,[]);SPG.get(g).push(sp)}}
+  C.base=[];C.ol=[];for(const k of KEYS)for(let j=0;j<SLOTMAX+40;j++)C[k].push(0);for(let j=0;j<SLOTMAX+40;j++){C.code.push('');C.ds.push('')}
+}
+/* parcours en profondeur : allow[k] = indices de valeurs autorisées ; masks[k][v] = mots de la recherche satisfaits */
+function walk(sp,allow,masks,m0,full,cb){
+  const {order,lists,p,L}=sp,cur=new Array(L).fill(0);let stop=false;
+  (function rec(i,acc,m){
+    if(stop)return;
+    if(i===L){if(full&&(m&full)!==full)return;const code=p+acc;if(sp.exclSet.size&&sp.exclSet.has(code))return;if(cb(cur,code))stop=true;return}
+    const A=allow[i],pv=sp.prev[i];
+    for(let q=0;q<A.length;q++){const k=A[q];
+      if(pv.length){let bad=false;for(let t=0;t<pv.length;t++){const j=pv[t];if(sp.fbn[j][i].has(cur[j]*64+k)){bad=true;break}}if(bad)continue}
+      cur[i]=k;rec(i+1,acc+lists[i][k],masks?(m|masks[i][k]):m);if(stop)return}
+  })(0,'',m0);
+}
+/* dénombrement exact sans énumérer : créneaux libres combinés par distribution, créneaux contraints parcourus */
+function countSpec(sp,allow,masks,m0,full){
+  const W=full?full+1:1;
+  let dist=new Map([[0,1]]);
+  for(const k of sp.fr){const sd=new Map();for(const v of allow[k]){const m=masks?masks[k][v]:0;sd.set(m,(sd.get(m)||0)+1)}
+    const nd=new Map();for(const [m,c] of dist)for(const [m2,c2] of sd){const mm=m|m2;nd.set(mm,(nd.get(mm)||0)+c*c2)}dist=nd}
+  const ways=new Map();const wf=m=>{let r=ways.get(m);if(r===undefined){r=0;for(const [mf,c] of dist)if(!full||((m|mf)&full)===full)r+=c;ways.set(m,r)}return r};
+  let total=0;const cs=sp.cs,cur=new Array(sp.L).fill(0);
+  (function rec(q,m){
+    if(q===cs.length){total+=wf(m);return}
+    const i=cs[q],A=allow[i],pv=sp.prev[i];
+    for(let t=0;t<A.length;t++){const k=A[t];let bad=false;for(let u=0;u<pv.length;u++){const j=pv[u];if(sp.fbn[j][i].has(cur[j]*64+k)){bad=true;break}}if(bad)continue;
+      cur[i]=k;rec(q+1,masks?(m|masks[i][k]):m)}
+  })(0,m0);
+  // retrait des références exclues (déjà existantes ou doublons) qui passent le filtre
+  for(const tp of sp.excl){let m=m0,ok=true;for(let k=0;k<sp.L;k++){if(!allow[k].includes(tp[k])){ok=false;break}if(masks)m|=masks[k][tp[k]]}if(ok&&(!full||(m&full)===full))total--}
+  return total;
+}
+/* filtres dépendant des options choisies : autorisations par créneau */
+function specFilter(sp,F){
+  const ex=sp.ex,L=sp.L,ip0=C.ip[ex],cs0=D.cct[C.cct[ex]],gs0=D.grad[C.grad[ex]],ds0=D.det[C.det[ex]];
+  const has=f=>sp.fam.includes(f);
+  if(!has('Température de couleur')&&!F.cctPass(cs0))return null;
+  if(!has('Étanchéité')&&ip0<F.ipm)return null;
+  if(!has('Alimentation')&&!F.gradPass(gs0))return null;
+  if(F.det!==null&&!has('Cellule')&&ds0!==F.det)return null;
+  for(const [f,c] of F.ofil)if(!has(f)&&c!=='')return null;
+  const fixed=(sp.p+' sfel '+F.gname+' '+F.tname).toLowerCase();let m0=0;F.words.forEach((w,b)=>{if(fixed.includes(w))m0|=1<<b});
+  const allow=[],masks=[];
+  for(let k=0;k<L;k++){const f=sp.fam[k],A=[],M=[];
+    sp.lists[k].forEach((v,vi)=>{const a=sp.attrs[k][vi];
+      if(f==='Température de couleur'&&!F.cctPass(a.cct!=null?a.cct:cs0))return;
+      if(f==='Température de couleur'&&F.irc>C.irc[ex]&&!(a.irc>=F.irc))return;
+      if(f==='Étanchéité'&&(a.ip!=null?a.ip:ip0)<F.ipm)return;
+      if(f==='Alimentation'&&!F.gradPass(a.grad!=null?a.grad:gs0))return;
+      if(f==='Cellule'&&F.det!==null){const dv=a.det==null?ds0:(a.det===''?'':(ds0||a.det));if(dv!==F.det)return}
+      if(sp.fam.indexOf(f)===k)for(const [ff,c] of F.ofil)if(ff===f&&v!==c)return;
+      let bits=0;if(F.words.length){const txt=(v+' '+a.lab).toLowerCase();F.words.forEach((w,b)=>{if(txt.includes(w))bits|=1<<b})}
+      A.push(vi);M[vi]=bits});
+    if(!A.length)return null;allow.push(A);masks.push(M)}
+  return {allow,masks,m0};
+}
+function materialize(sp,cur,code,j){
+  const id=N0+j,ex=sp.ex;for(const k of KEYS)C[k][id]=C[k][ex];const labs=[];
+  for(let k=0;k<sp.order.length;k++){const a=sp.attrs[k][cur[k]];if(a.lab)labs.push(a.lab);
+    if(a.cct!=null)C.cct[id]=idxIn(D.cct,a.cct);
+    if(a.irc)C.irc[id]=a.irc;
+    if(a.ip!=null){C.ip[id]=a.ip;C.ipt[id]=idxIn(D.ipt,'IP'+a.ip)}
+    if(a.grad!=null)C.grad[id]=idxIn(D.grad,a.grad);
+    if(a.det!=null){if(a.det==='')C.det[id]=idxIn(D.det,'');else if(!D.det[C.det[ex]])C.det[id]=idxIn(D.det,a.det)}}
+  const um=/UGR(\d+)/.exec(sp.p);if(um)labs.unshift('UGR '+um[1]);
+  C.code[id]=code;C.ds[id]='SFEL '+D.gamme[C.gamme[ex]]+' '+sp.p+(labs.length?' · '+labs.join(' · '):'');C.base[j]=ex;C.ol[j]=labs.join(' · ');return id;
+}
+const specFor=(g,code)=>{const L=SPG.get(g);if(!L)return null;let best=null;for(const sp of L)if(code.startsWith(sp.p)&&(!best||sp.p.length>best.p.length))best=sp;return best};
+function parseVals(sp,code){
+  let pos=sp.p.length;const vals=[];for(let k=0;k<sp.order.length;k++){let v='';for(const c of sp.sorted[k])if(code.startsWith(c,pos)){v=c;break}pos+=v.length;vals.push(v)}
+  if(pos===code.length)return vals;
+  /* ordre différent (références existantes de la base) : lecture dans n'importe quel ordre */
+  if(!sp._cm){const m=new Map();sp.sorted.forEach((arr,k)=>arr.forEach(c=>{if(!m.has(c))m.set(c,[]);m.get(c).push(k)}));sp._cm=m;sp._cl=[...m.keys()].sort((x,y)=>y.length-x.length)}
+  const memo=new Map();const rec=(s,used)=>{if(!s.length)return[];const key=s+'|'+used;if(memo.has(key))return memo.get(key);let r=null;
+    for(const c of sp._cl){if(!s.startsWith(c))continue;for(const k of sp._cm.get(c)){if(used&(1<<k))continue;const t=rec(s.slice(c.length),used|(1<<k));if(t){r=[[k,c]].concat(t);break}}if(r)break}memo.set(key,r);return r};
+  const res=rec(code.slice(sp.p.length),0);if(!res)return vals;
+  const out=new Array(sp.order.length).fill('');for(const [k,c] of res)out[k]=c;return out}
+async function boot(){
+  try{
+    prog(10);C=await getJSON('data/core.json');prog(60);
+    N=C.n;for(const k in C.dicts)D[k]=C.dicts[k];
+    const W=C.words;C.ds=new Array(N);C.dl=new Array(N);CODEIDX=new Map();
+    for(let i=0;i<N;i++){const s=C.desig[i].split(' ');let o='';for(let j=0;j<s.length;j++)o+=(j?' ':'')+W[parseInt(s[j],16)];C.ds[i]=o;C.dl[i]=(o+' '+C.code[i]).toLowerCase();CODEIDX.set(C.code[i],i)}
+    try{const X=await getJSON('data/extra.json');for(const k of ['cl','gw','life','ang','sdcm','gr','gar','fr','van','sec','cut','pf','volt','fix','forme','cutlo','cuthi','cutt','opal']){C['x'+k]=X[k];KEYS.push('x'+k)}D.xvolt=X.voltd;D.xfix=X.fixd;D.xforme=X.formed;D.xcutt=X.cuttd}catch(e){for(const k of ['cl','gw','life','ang','sdcm','gr','gar','fr','van','sec','cut','pf','volt','fix','forme','cutlo','cuthi','cutt']){C['x'+k]=new Array(N).fill(0);KEYS.push('x'+k)}D.xvolt=[''];D.xfix=[''];D.xforme=[''];D.xcutt=['']}
+    N0=N;prog(85);FILES=await getJSON('data/files.json');OPT=await getJSON('data/options.json');initVirtual(await getJSON('data/gen.json'));prog(100);
+    $('#load').classList.add('hidden');$('#tab-cctp').classList.remove('hidden');
+    hero();buildFilters();run();buildOpts();buildCfg();buildCctp();
+    getJSON('data/ft.json').then(l=>{FTSET=new Set(l)}).catch(()=>{});getJSON('data/links.json').then(l=>{LINKS=l;draw()}).catch(()=>{});
+  }catch(e){$('#load').innerHTML='<p>Le catalogue n\'a pas pu être chargé ('+e.message+'). Rechargez la page.</p>'}
+}
+function hero(){
+  const cnt=[0,0,0];for(let i=0;i<N0;i++)cnt[C.brand[i]]++;cnt[D.brand.indexOf('SFEL')]+=VT;
+  const tot=N0+VT;$('#sub').textContent='Lébénoïd · Integratech · SFEL 2026';
+  const k=$('#kpis');k.append(el('div',{class:'kpi'},el('b',{text:fr(tot)}),el('span',{text:'références'})));
+  const gm=new Set(C.gamme.slice(0,N0)).size,tp=new Set(C.type.slice(0,N0)).size;
+  k.append(el('div',{class:'kpi'},el('b',{text:String(gm)}),el('span',{text:'gammes'})),el('div',{class:'kpi'},el('b',{text:String(tp)}),el('span',{text:'types de produit'})));
+  const b=$('#bar3'),lg=$('#legend');
+  D.brand.forEach((name,i)=>{if(!cnt[i])return;b.append(el('i',{style:'width:'+(cnt[i]/tot*100)+'%;background:'+({SFEL:'#a78bf0',Integratech:'#4cc7bf','Lébénoïd':'#e5a061'}[name])}));
+    lg.append(el('em',{style:'--c:'+({SFEL:'#a78bf0',Integratech:'#4cc7bf','Lébénoïd':'#e5a061'}[name]),text:name+' · '+fr(cnt[i])}))});
+}
+/* ---------- filtres (ordre du fichier Excel) ---------- */
+const defs=[];
+const sel=(key,label,row,vals)=>defs.push({key,label,row,kind:'sel',vals});
+const inp=(key,label,row,ph)=>defs.push({key,label,row,kind:'num',ph});
+function buildFilters(){
+  sel('type','Type de produit','r1');sel('gamme','Gamme','r1');inp('kw','Mot-clé (désignation ou référence)','r1','ex. réglette 1200');
+  
+  sel('brand','Marque','r1');sel('pos','Positionnement groupe','r1');
+  inp('pmin','Puissance min. (W)','r2');inp('pmax','Puissance max. (W)','r2');inp('fmin','Flux min. (lm)','r2');inp('fmax','Flux max. (lm)','r2');
+  inp('emin','Efficacité min. (lm/W)','r2');sel('cct','Temp. de couleur (K)','r2');inp('irc','IRC minimum','r2');sel('grad','Gradation','r2');sel('ip','IP minimum','r2',[20,40,44,54,55,65,66,67,68].map(x=>['IP'+x,'IP'+x]));sel('ik','IK minimum','r2',[2,3,4,5,6,7,8,9,10].map(x=>['IK'+String(x).padStart(2,'0'),'IK'+String(x).padStart(2,'0')]));inp('ugr','UGR maximum','r2');
+  for(const [k,l] of [['h','Hauteur'],['w','Largeur'],['l','Longueur'],['d','Diamètre']]){inp(k+'min',l+' min. (mm)','r3');inp(k+'max',l+' max. (mm)','r3')}
+  inp('cut','Diamètre de découpe (mm)','r3');
+  sel('opt','Optique','r4');sel('matc','Matériau corps','r4');sel('col','Couleur','r4');sel('cab','Câblage traversant','r4');sel('det','Détection','r4');
+  for(const d of defs){
+    const box=el('label',{class:'f'},el('span',{text:d.label}));let c;
+    if(d.kind==='sel'){c=el('select',{id:'f_'+d.key});c.addEventListener('change',()=>onChange(d.key))}
+    else{c=el('input',{id:'f_'+d.key,type:'text',inputmode:d.key==='kw'?'text':'decimal',placeholder:d.ph||''});c.addEventListener('input',()=>onChange(d.key))}
+    box.append(c);$('#'+d.row).append(box);d.box=box;d.c=c;
+  }
+  refreshLists();
+  $('#reset').onclick=()=>{for(const d of defs)d.c.value='';refreshLists();buildGammeOpts();run()};
+  $('#toggleAdv').onclick=()=>{const a=$('#adv');a.classList.toggle('hidden');$('#toggleAdv').textContent=a.classList.contains('hidden')?'Afficher les critères':'Masquer les critères'};
+  $('#vCards').onclick=()=>setView('cards');$('#vTable').onclick=()=>setView('table');
+}
+let VIEW='table';function setView(v){VIEW=v;$('#vCards').setAttribute('aria-pressed',String(v==='cards'));$('#vTable').setAttribute('aria-pressed',String(v==='table'));$('#cards').classList.toggle('hidden',v!=='cards');$('#twrap').classList.toggle('hidden',v!=='table');draw()}
+let tmr=null;
+function onChange(k){if(['brand','type','gamme','pos'].includes(k)){refreshLists();if(k==='gamme'||k==='type'||k==='brand')buildGammeOpts()}clearTimeout(tmr);tmr=setTimeout(run,k==='kw'?160:20)}
+const defOf=k=>defs.find(x=>x.key===k);const val=k=>defOf(k).c.value;
+const numv=k=>{const x=parseFloat(val(k).replace(',','.').trim());return isNaN(x)?null:x};
+function setOptions(d,list){const cur=d.c.value;d.c.innerHTML='';d.c.append(el('option',{value:'',text:'(tous)'}));for(const [lab,v,n] of list)d.c.append(el('option',{value:String(v),text:n!=null?lab+' ('+fr(n)+')':lab}));if([...d.c.options].some(o=>o.value===cur))d.c.value=cur}
+const countBy=(arr,f)=>{const m=new Map();for(let i=0;i<N0;i++){if(!f(i))continue;m.set(arr[i],(m.get(arr[i])||0)+1)}for(const sp of SPECS){if(!sp.n||!f(sp.ex))continue;m.set(arr[sp.ex],(m.get(arr[sp.ex])||0)+sp.n)}return m};
+function refreshLists(){
+  const idx=(k,name)=>val(k)===''?-1:D[name].indexOf(val(k));
+  const bi=idx('brand','brand'),ti=idx('type','type'),gi=idx('gamme','gamme'),pi=idx('pos','pos');
+  const base=i=>(bi<0||C.brand[i]===bi)&&(ti<0||C.type[i]===ti)&&(gi<0||C.gamme[i]===gi)&&(pi<0||C.pos[i]===pi);
+  const lst=(name,arr,f)=>[...countBy(arr,f).entries()].filter(([v])=>D[name][v]!=='').map(([v,n])=>[D[name][v],D[name][v],n]).sort((a,c)=>a[0].localeCompare(c[0],'fr',{numeric:true}));
+  setOptions(defOf('brand'),lst('brand',C.brand,i=>(ti<0||C.type[i]===ti)&&(gi<0||C.gamme[i]===gi)&&(pi<0||C.pos[i]===pi)));
+  setOptions(defOf('pos'),lst('pos',C.pos,i=>(bi<0||C.brand[i]===bi)&&(ti<0||C.type[i]===ti)&&(gi<0||C.gamme[i]===gi)));
+  setOptions(defOf('type'),lst('type',C.type,i=>(bi<0||C.brand[i]===bi)&&(gi<0||C.gamme[i]===gi)&&(pi<0||C.pos[i]===pi)));
+  setOptions(defOf('gamme'),lst('gamme',C.gamme,i=>(bi<0||C.brand[i]===bi)&&(ti<0||C.type[i]===ti)&&(pi<0||C.pos[i]===pi)));
+  for(const d of defs)if(d.vals)setOptions(d,d.vals);
+  const cc=new Map();for(let i=0;i<N0;i++){if(!base(i))continue;const s=D.cct[C.cct[i]];if(!s)continue;for(const x of String(s).split(/[\/\s;,]+/))if(/^\d{4}$/.test(x))cc.set(x,(cc.get(x)||0)+1)}
+  const gm=countBy(C.grad,base),gl=[['Dimmable (tous types)','Dimmable (tous types)'],['Non dimmable','Non dimmable']],gseen=new Set();
+  for(const [v,n] of gm){const s=D.grad[v];if(s&&s.toLowerCase()!=='non'){gl.push([s,s,n]);gseen.add(s)}}
+  for(const sp of SPECS){if(!base(sp.ex))continue;sp.attrs.forEach(al=>al.forEach(a=>{if(a.cct&&/^\d{4}$/.test(a.cct)&&!cc.has(a.cct))cc.set(a.cct,null);if(a.grad&&a.grad!=='Non'&&!gseen.has(a.grad)){gseen.add(a.grad);gl.push([a.grad,a.grad,null])}}))}
+  setOptions(defOf('cct'),[...cc.entries()].sort((a,c)=>a[0]-c[0]).map(([v,n])=>[v+' K',v,n]));
+  setOptions(defOf('grad'),gl);
+  const om=new Map();for(let i=0;i<N0;i++){if(!base(i))continue;for(const [a,nm] of [[C.opt,'opt'],[C.matd,'matd']]){const s=D[nm][a[i]];if(s)om.set(s,(om.get(s)||0)+1)}}
+  for(const sp of SPECS){if(!sp.n||!base(sp.ex))continue;for(const [a,nm] of [[C.opt,'opt'],[C.matd,'matd']]){const s=D[nm][a[sp.ex]];if(s)om.set(s,(om.get(s)||0)+sp.n)}}
+  setOptions(defOf('opt'),[...om.entries()].sort((a,c)=>a[0].localeCompare(c[0],'fr')).map(([v,n])=>[v,v,n]));
+  setOptions(defOf('matc'),lst('matc',C.matc,base));setOptions(defOf('col'),lst('col',C.col,base));setOptions(defOf('cab'),lst('cab',C.cab,base));setOptions(defOf('det'),lst('det',C.det,base));updateScope();
+}
+const PRES={cut:i=>C.xcuthi[i]>0,ip:i=>C.ip[i]>0,ik:i=>C.ik[i]>0,pw:i=>C.pw[i]>0,flux:i=>C.flux[i]>0,eff:i=>C.eff[i]>0,cct:i=>D.cct[C.cct[i]]!=='',irc:i=>C.irc[i]>0,grad:i=>D.grad[C.grad[i]]!=='',h:i=>C.h[i]>0,w:i=>C.w[i]>0,l:i=>C.l[i]>0,d:i=>C.d[i]>0,ugr:i=>C.ugr[i]>0,opt:i=>D.opt[C.opt[i]]!==''||D.matd[C.matd[i]]!=='',matc:i=>D.matc[C.matc[i]]!=='',col:i=>D.col[C.col[i]]!=='',cab:i=>D.cab[C.cab[i]]!=='',det:i=>D.det[C.det[i]]!==''};
+const KEYMAP={cut:'cut',ip:'ip',ik:'ik',pmin:'pw',pmax:'pw',fmin:'flux',fmax:'flux',emin:'eff',cct:'cct',irc:'irc',grad:'grad',hmin:'h',hmax:'h',wmin:'w',wmax:'w',lmin:'l',lmax:'l',dmin:'d',dmax:'d',ugr:'ugr',opt:'opt',matc:'matc',col:'col',cab:'cab',det:'det'};
+function updateScope(){
+  const ix=(k,nm)=>val(k)===''?-1:D[nm].indexOf(val(k));
+  const b=ix('brand','brand'),t=ix('type','type'),g=ix('gamme','gamme'),p=ix('pos','pos');
+  const any=b>=0||t>=0||g>=0||p>=0;const has={};
+  if(any){for(const k in PRES)has[k]=false;
+    const sel=i=>(b<0||C.brand[i]===b)&&(t<0||C.type[i]===t)&&(g<0||C.gamme[i]===g)&&(p<0||C.pos[i]===p);
+    for(let i=0;i<N0;i++){if(!sel(i))continue;let all=true;for(const k in PRES){if(has[k])continue;if(PRES[k](i))has[k]=true;else all=false}if(all)break}
+    for(const sp of SPECS){if(!sel(sp.ex))continue;for(const k in PRES)if(!has[k]&&PRES[k](sp.ex))has[k]=true;for(const f of sp.fam){if(f==='Température de couleur')has.cct=true;if(f==='Étanchéité')has.ip=true;if(f==='Alimentation')has.grad=true;if(f==='Cellule')has.det=true}}}
+  for(const d of defs){const m=KEYMAP[d.key];if(!m)continue;d.box.classList.toggle('hidden',any&&!has[m]&&d.c.value==='')}
+  for(const r of ['r2','r3','r4']){const row=$('#'+r),vis=[...row.children].some(x=>!x.classList.contains('hidden'))&&!(r==='r4'&&ODEFS.length>0);row.classList.toggle('hidden',!vis);row.previousElementSibling.classList.toggle('hidden',!vis)}
+}
+let ODEFS=[],PCACHE=new Map();
+function picksReal(i){let r=PCACHE.get(i);if(r===undefined){const sp=specFor(D.gamme[C.gamme[i]],C.code[i]);r=sp?{sp,vals:parseVals(sp,C.code[i])}:null;PCACHE.set(i,r)}return r}
+function buildGammeOpts(){
+  const box=$('#r5'),head=$('#gopt');box.textContent='';ODEFS=[];PCACHE=new Map();
+  const g=val('gamme');let show=false;
+  if(g&&SPG.has(g)&&(val('brand')===''||val('brand')==='SFEL')){
+    const fm=new Map();
+    for(const sp of SPG.get(g))sp.fam.forEach((f,k)=>{if(sp.order[k].includes('#')||f==='Autre')return;let m=fm.get(f);if(!m){m=new Map();fm.set(f,m)}for(const c of sp.lists[k])if(!m.has(c))m.set(c,(sp.l[f]&&sp.l[f][c])||'')});
+    for(const [f,m] of fm){if(m.size<2)continue;
+      const c=el('select',null,el('option',{value:'__',text:'(tous)'}),[...m].map(([code,lab])=>el('option',{value:code,text:(code||'—')+(lab?' · '+lab:'')})));
+      c.addEventListener('change',()=>{clearTimeout(tmr);tmr=setTimeout(run,20)});
+      const lab=el('label',{class:'f'},el('span',{text:f}),c);box.append(lab);ODEFS.push({fam:f,c,box:lab})}show=ODEFS.length>0}
+  head.classList.toggle('hidden',!show);box.classList.toggle('hidden',!show);
+  if(show)for(const k of ['opt','matc','col','cab','det'])defOf(k).c.value='';
+  updateScope();
+}
+let RES=[],SHOW=100,TCOUNT=new Map();
+function run(){
+  const g=val,n=numv,ix=(k,nm)=>g(k)===''?-1:D[nm].indexOf(g(k));
+  const b=ix('brand','brand'),t=ix('type','type'),ga=ix('gamme','gamme'),po=ix('pos','pos'),co=ix('col','col'),de=ix('det','det'),cab=ix('cab','cab'),mc=ix('matc','matc');
+  const opt=g('opt'),optI=opt===''?-1:D.opt.indexOf(opt),mdI=opt===''?-1:D.matd.indexOf(opt);
+  const ipm=g('ip')===''?0:parseInt(g('ip').slice(2)),ikm=g('ik')===''?0:parseInt(g('ik').slice(2));
+  const pmin=n('pmin')||0,pmax=n('pmax'),fmin=n('fmin')||0,fmax=n('fmax'),emin=n('emin')||0,irc=n('irc')||0,ugr=n('ugr');
+  const dm={};for(const k of ['h','w','l','d'])dm[k]=[n(k+'min')||0,n(k+'max')];
+  const cct=g('cct'),gr=g('grad'),kw=g('kw').toLowerCase().trim().split(/\s+/).map(w=>SYN[w]!==undefined?SYN[w]:w).filter(Boolean);
+  const gradPass=s=>{s=(s||'').toLowerCase();return gr===''?true:gr==='Dimmable (tous types)'?(s!==''&&s!=='non'):gr==='Non dimmable'?s==='non':s.includes(gr.toLowerCase())};
+  const cctPass=s=>cct===''||String(s).includes(cct);
+  const gradOK=new Uint8Array(D.grad.length);for(let v=0;v<D.grad.length;v++)gradOK[v]=gradPass(D.grad[v])?1:0;
+  const cctOK=new Uint8Array(D.cct.length);for(let v=0;v<D.cct.length;v++)cctOK[v]=cctPass(D.cct[v])?1:0;
+  const ofil=ODEFS.filter(o=>o.c.value!=='__').map(o=>[o.fam,o.c.value]);
+  const cutv=parseFloat(String(g('cut')).replace(',','.'))||0;
+  const modelOK=i=>{
+    if(b>=0&&C.brand[i]!==b)return false;if(ga>=0&&C.gamme[i]!==ga)return false;if(po>=0&&C.pos[i]!==po)return false;
+    if(C.ik[i]<ikm)return false;
+    const p=C.pw[i];if(p<pmin||(pmax!=null&&!(p>0&&p<=pmax)))return false;
+    const f=C.flux[i];if(f<fmin||(fmax!=null&&!(f>0&&f<=fmax)))return false;
+    if(C.eff[i]<emin||Math.max(C.irc[i],SPIRC.get(i)||0)<irc)return false;
+    if(ugr!=null&&!(C.ugr[i]>0&&C.ugr[i]<=ugr))return false;
+    for(const k of ['h','w','l','d']){const v=C[k][i],[a,z]=dm[k];if(v<a||(z!=null&&!(v>0&&v<=z)))return false}
+    if(cutv>0&&!(C.xcuthi[i]>0&&cutv>=C.xcutlo[i]-2&&cutv<=C.xcuthi[i]+2))return false;
+    if(opt!==''&&C.opt[i]!==optI&&C.matd[i]!==mdI)return false;
+    if(mc>=0&&C.matc[i]!==mc)return false;if(co>=0&&C.col[i]!==co)return false;if(cab>=0&&C.cab[i]!==cab)return false;
+    return true};
+  const optDep=ipm>0||cct!==''||gr!==''||de>=0||ofil.length>0||kw.length>0;
+  const out=[],vseg=[];let vtot=0;TCOUNT=new Map();
+  for(let i=0;i<N0;i++){
+    if(!modelOK(i))continue;if(C.ip[i]<ipm)continue;if(de>=0&&C.det[i]!==de)continue;
+    if(!cctOK[C.cct[i]]||!gradOK[C.grad[i]])continue;
+    if(ofil.length){const pr=picksReal(i);if(!pr)continue;let ok2=true;for(const [f,c] of ofil){const k=pr.sp.fam.indexOf(f);if((k<0?'':pr.vals[k])!==c){ok2=false;break}}if(!ok2)continue}
+    if(kw.length){const s=C.dl[i];let m=true;for(const w of kw)if(!s.includes(w)){m=false;break}if(!m)continue}
+    TCOUNT.set(C.type[i],(TCOUNT.get(C.type[i])||0)+1);
+    if(t>=0&&C.type[i]!==t)continue;
+    out.push(i);
+  }
+  const words=kw.slice(0,6),full=words.length?(1<<words.length)-1:0;
+  const F={irc,ipm,cctPass,gradPass,det:de>=0?D.det[de]:null,ofil,words};
+  for(const sp of SPECS){const ex=sp.ex;if(!sp.n||!modelOK(ex))continue;const ty=C.type[ex];
+    if(!optDep){TCOUNT.set(ty,(TCOUNT.get(ty)||0)+sp.n);if(t>=0&&ty!==t)continue;vseg.push({sp,cnt:sp.n,f:null});vtot+=sp.n;continue}
+    F.gname=D.gamme[C.gamme[ex]];F.tname=D.type[ty];
+    const f=specFilter(sp,F);if(!f)continue;
+    const cnt=countSpec(sp,f.allow,f.masks,f.m0,full);if(cnt<=0)continue;
+    TCOUNT.set(ty,(TCOUNT.get(ty)||0)+cnt);if(t>=0&&ty!==t)continue;vseg.push({sp,cnt,f,full});vtot+=cnt}
+  RES=out;VSEG=vseg;VTOT=vtot;SHOW=100;for(const d of defs)d.box.classList.toggle('on',d.c.value!=='');for(const o of ODEFS)o.box.classList.toggle('on',o.c.value!=='__');
+  tiles();draw();
+}
+function tiles(){
+  const box=$('#tiles'),cur=val('type');box.textContent='';
+  const types=D.type.map((t,i)=>[t,i,TCOUNT.get(i)||0]).filter(x=>x[0]).sort((a,b)=>b[2]-a[2]);
+  for(const [t,i,n] of types){
+    const b=el('button',{class:'tile'+(n?'':' zero'),'aria-pressed':String(cur===t),html:'<span class="t"></span><span class="n"></span>'});
+    b.querySelector('.t').textContent=t;b.querySelector('.n').textContent=fr(n);
+    b.onclick=()=>{defOf('type').c.value=cur===t?'':t;refreshLists();run()};box.append(b)}
+}
+/* ---------- affichage ---------- */
+const baseOf=i=>i>=N0?C.base[i-N0]:i;
+const linkOf=i=>LINKS?LINKS[baseOf(i)]:null;
+function parseLinks(s){if(!s)return[];return s.split(' ; ').map(x=>{const m=/^(\S+) \(([^)]*)\)$/.exec(x.trim());return m?{ref:m[1],info:m[2]}:{ref:x.trim(),info:''}}).filter(x=>x.ref)}
+const posCls=v=>v==='Prescription'||v==='Variante'?v:'mix';
+function card(i){
+  const b=D.brand[C.brand[i]],t=D.type[C.type[i]],bc=BC[b]||'var(--line)';
+  const c=el('button',{class:'card',style:'--bc:'+bc,type:'button'});
+  c.append(el('div',{class:'top'},el('div',{style:'min-width:0'},el('div',{class:'ref',text:C.code[i]}),el('div',{class:'gam',text:b+' · '+D.gamme[C.gamme[i]]+' · '+t}))));
+  c.append(el('div',{class:'des',text:C.ds[i]}));
+  const eff=C.eff[i];
+  c.append(el('div',{class:'mets'},
+    el('div',{class:'met'},'Puissance',el('b',{text:C.pw[i]?C.pw[i]+' W':'—'})),
+    el('div',{class:'met'},'Flux',el('b',{text:C.flux[i]?fr(C.flux[i])+' lm':'—'})),
+    el('div',{class:'met'},'Efficacité',el('b',{text:eff?eff+' lm/W':'—'}))));
+  const bd=el('div',{class:'badges'});
+  const cs=String(D.cct[C.cct[i]]||'');const k=parseInt(cs);if(k)bd.append(el('span',{class:'bd',text:cs.replace(/\//g,' / ')+' K'}));
+  const ip=D.ipt[C.ipt[i]],ik=D.ikt[C.ikt[i]];if(ip)bd.append(el('span',{class:'bd',text:ip}));if(ik)bd.append(el('span',{class:'bd',text:ik}));
+  const col=D.col[C.col[i]];if(col)bd.append(el('span',{class:'bd',text:col}));
+  const dims=[C.l[i],C.w[i],C.h[i]].filter(Boolean).join(' × ');if(dims)bd.append(el('span',{class:'bd',text:dims+' mm'}));else if(C.d[i])bd.append(el('span',{class:'bd',text:'Ø '+C.d[i]+' mm'}));
+  if(C.ugr[i])bd.append(el('span',{class:'bd',text:'UGR '+C.ugr[i]}));
+  bd.append(el('span',{class:'pos '+posCls(D.pos[C.pos[i]]),text:D.pos[C.pos[i]]}));
+  c.append(bd);
+  const l=linkOf(i);if(l&&l[1]&&!/^Aucune/.test(l[1]))c.append(el('div',{class:'lk'},(l[0]==='V'?'➜ Variante : ':'⬅ Prescription : ')+l[1]+(l[2]?' · ':''),l[2]?el('span',{class:'lvl lvl-'+l[2],text:l[2]}):null));
+  c.onclick=()=>openRef(i);return c;
+}
+const COLS=[['Marque',i=>D.brand[C.brand[i]],'b'],['Référence',i=>C.code[i],'mono'],['Désignation',i=>C.ds[i],'des'],['Gamme',i=>D.gamme[C.gamme[i]]],['Type',i=>D.type[C.type[i]]],
+['H (mm)',i=>C.h[i]||'','num'],['L (mm)',i=>C.w[i]||'','num'],['Long. (mm)',i=>C.l[i]||'','num'],['Ø (mm)',i=>C.d[i]||'','num'],['Découpe (mm)',i=>D.xcutt[C.xcutt[i]]||(D.type[C.type[i]]==='Downlight'?'n.c.':''),'num'],['IP',i=>D.ipt[C.ipt[i]]||'n.c.'],['IK',i=>D.ikt[C.ikt[i]]||'n.c.'],
+['W',i=>C.pw[i]||'','num'],['lm',i=>C.flux[i]||'','num'],['lm/W',i=>C.eff[i]||'','num'],['CCT (K)',i=>D.cct[C.cct[i]]],['IRC',i=>C.irc[i]||'','num'],['Gradation',i=>D.grad[C.grad[i]]],['Couleur',i=>D.col[C.col[i]]],
+['Détection',i=>D.det[C.det[i]]],['Câblage trav.',i=>D.cab[C.cab[i]]],['Positionnement',i=>D.pos[C.pos[i]],'p'],['Lien conseillé',i=>{const l=linkOf(i);return l?(l[0]==='V'?'➜ Variante : ':'⬅ Prescription : ')+l[1]:(LINKS?'':'…')},'long'],['Niveau',i=>{const l=linkOf(i);return l?l[2]:''},'l'],['Écarts à signaler',i=>{const l=linkOf(i);return l?l[3]:''},'long']];
+
+/* ---------- liens vers les pages produit des sites ---------- */
+const SITE_I='https://integratech.fr/produits/',SITE_S='https://sfel.fr/produit/',SITE_L='https://www.lebenoid.fr/gamme/';
+const SI={'Evolve':['projecteurs-led','evolve-2'],'QT floodlight':['projecteurs-led','qt-floodlight'],
+'LED panel Manga Performance':['panneau-led','led-panel-manga-performance'],'LED panel Bright Performance':['panneau-led','led-panel-bright-performance'],'LED panel Bright Advanced':['panneau-led','led-panel-bright-advanced'],'LED panel Bright Advanced IP54':['panneau-led','led-panel-bright-advanced'],'Bright Essential':['panneau-led','led-panel-bright-essential'],'LED panel QT Advanced':['panneau-led','led-panel-qt-advanced'],'LED panel QTU Advanced':['panneau-led','led-panel-qtu-advanced'],'LED panel Quadra':['panneau-led','quadra-led-paneel'],
+'Monocolor White':['rubans-et-profiles-led','led-strips-advanced-mono'],'Monocolor Dotfree SMD':['rubans-et-profiles-led','ruban-led-performance-dotfree'],'Monocolor Dotfree COB':['rubans-et-profiles-led','led-strips-performance-cob'],'Monocolor Dotfree CSP Pro':['rubans-et-profiles-led','led-strips-performance-csp'],'Monocolor Dotfree Silicon':['rubans-et-profiles-led','led-strips-performance-sil'],'Special Forte Puissance':['rubans-et-profiles-led','ruban-led-performance-high-power'],'Special Haute Température':['rubans-et-profiles-led','led-strips-performance-ht'],'Special CRI95':['rubans-et-profiles-led','led-strips-performance-hoge-cri'],'Monocolor White étroit':['rubans-et-profiles-led','led-strips-performance-small'],'Grande Longueur 12m 24V':['rubans-et-profiles-led','led-strips-performance-long-12m'],'Grande Longueur 20m 48V':['rubans-et-profiles-led','led-strips-performance-long-20m'],'Grande Longueur 50m 48V':['rubans-et-profiles-led','led-strips-performance-long-50m'],'Multicolor RGB SMD':['rubans-et-profiles-led','ruban-led-advanced-rgb'],'RGBW':['rubans-et-profiles-led','ruban-led-advanced-rgbw'],'RGBTW':['rubans-et-profiles-led','led-strips-advanced-rgbtw'],'Monocolor TW':['rubans-et-profiles-led','led-strips-advanced-tw'],'Monocolor RGB':['rubans-et-profiles-led','led-strips-advanced-color'],'Digital':['rubans-et-profiles-led','led-strips-performance-digital'],
+'Compact':['downlight-led','compact'],'Deep':['downlight-led','deep'],'Soft':['downlight-led','soft'],'Downlight':['downlight-led','u4'],
+'Rail Connecteur Tracklights':['tracklights','3-fase-rails'],
+'PHBS3':['luminaires-high-bay','phbs3'],'PHBP3':['luminaires-high-bay','phbp3'],'PHBV3':['luminaires-high-bay','phbv3'],'PHB Extreme':['luminaires-high-bay','phb-extreme'],'Uboat':['luminaires-high-bay','uboat'],
+'Hydron Slim Essential':['luminaire-led-etanche','hydron-slim'],'Speedy Essential':['luminaire-led-etanche','speedy-slim'],'Protect':['luminaire-led-etanche','protect'],
+'Mona':['eclairage-plafonnier-et-mur','mona'],'Sola':['eclairage-plafonnier-et-mur','sola'],'Zora':['eclairage-plafonnier-et-mur','zora'],'Disc':['eclairage-plafonnier-et-mur',''],
+'Integra street':['eclairage-public','integra-street'],'Urban':['eclairage-public','urban'],'Dreamline':['eclairage-linéaire'.normalize('NFD').replace(/[̀-ͯ]/g,''),'dreamline'],'Lineaconnect':['eclairage-lineaire','lineaconnect'],'Integraconnect':['smart-light','']};
+const SS={'APPA':'appa-o340550830','APSO':'apso','APTI':'apti','BILENS':'bilens','BILENS OFFICE':'bilens-office','CAMELIA':'camelia-o100','CORIUS':'corius','CORY':'cory','CYLINDRE':'cylindre-o220','DONNA SQUARE':'donna-square','ELLA':'ella-o80','EMMA':'emma-o400','EVOLUX':'evolux','FACTORY':'factory-o400','FILAMENT':'filament-o125','FIUS':'fius-o185220','GAEL':'gael','GYM LENS':'gym-lens','HUGO':'hugo','KYLIAN':'kylian-o85','LN':'ln','LUCILLE':'lucille-o290390','MARS':'mars','ODRI':'odri','OPALI':'opali-mu','OPOM':'opom-mu','PANO':'pano-gr','RGD':'rgd','SIPA':'sipa','SIRIUS':'sirius','SLADI':'sladi','SLIM OFFICE':'slim-office','SUENO':'sueno','SURI':'suri','TUFO':'tufo-o100','TUKORE':'tukore-o100133','TUMO':'tumo-o70','TUNI':'tuni-o40','TURBO':'turbo-o125','TUTTO':'tutto-o70','ULYSSE':'ulysse','ZAPI':'zapi','ZIGZAG':'zigzag'};
+const SL={'Alizé':'hublots/alize','Axiome':'hublots/axiome','Basic':'hublots/basic','C320':'hublots/c320','Cube':'hublots/cube','H350':'hublots/h350','Horizon':'hublots/horizon','Izy Pro':'hublots/izy-pro','Option':'hublots/option','Orcade':'hublots/orcade','Squad':'hublots/squad','Vernosc':'hublots/vernosc','Arche':'appliques/arche','Atoll':'appliques/atoll','Dune':'appliques/dune','Lips':'appliques/lips','Eo':'reglettes-sdb/eo','Sliméo':'reglettes-sdb/slimeo','Xéo2':'reglettes-sdb/xeo2'};
+function siteOf(i){
+  if(i>=N0)i=C.base[i-N0];
+  const b=D.brand[C.brand[i]],g=D.gamme[C.gamme[i]],code=C.code[i];
+  if(b==='SFEL'){let sl=SS[g];if(!sl)return null;
+    if(g==='OPALI')sl=/^OPA-MO/.test(code)?'opali-mo':'opali-mu';else if(g==='OPOM')sl=/^OPO-MO/.test(code)?'opom-mo':'opom-mu';else if(g==='TUFO'&&/^TUFH/.test(code))sl='tufo-h-o100';
+    return {url:SITE_S+sl+'/',txt:'Page produit SFEL (fiche technique téléchargeable sur la page)'}}
+  if(b==='Lébénoïd'){let sl=SL[g];if(g==='Sextan')sl=(D.type[C.type[i]]==='Applique'?'appliques/':'hublots/')+'sextan';if(!sl)return null;return {url:SITE_L+sl,txt:'Page gamme Lébénoïd'}}
+  if(b==='Integratech'&&FTSET&&FTSET.has(code))return {url:'https://integratech.be/downloads/datasheets/'+encodeURIComponent(code)+'-fr.pdf',txt:'Fiche technique Integratech (PDF)'};
+  if(b==='Integratech'){let m=SI[g],cat,sl;
+    if(g==='Brightmaster BM'){const x=/^BM([234])/.exec(code),y=/^ITSP([234])/.exec(code);if(x){cat='projecteurs-led';sl='brightmaster-'+x[1]}else if(y){cat='projecteurs-led';sl='integrasports-'+y[1]}else{cat='projecteurs-led';sl=''}}
+    else if(g==='HWDP'){cat='luminaire-led-etanche';sl=/^HWD-ADV/.test(code)?'hwd-advanced':/^HWD-PER/.test(code)?'hwd-performance':''}
+    else if(g==='Tracklights'){cat='tracklights';sl=/^F1/.test(code)?'tracklight-f1':/^F2/.test(code)?'tracklight-f2':''}
+    else if(g==='Tracklight Linear Track Advanced'){cat='tracklights';sl=/^LT-ADV90/.test(code)?'linear-track-advanced-tilt-90':'linear-track-advanced-120'}
+    else if(g==='Tracklight Linear Track Performance'){cat='tracklights';sl=''}
+    else if(g==='Profilés'||g==='Alimentations LED'||g==='Controlup'){return {url:'https://integratech.fr/produits/rubans-et-profiles-led/resultats?type='+(g==='Profilés'?'profielen':g==='Controlup'?'sturing':'voedingen'),txt:'Liste filtrée du site (gamme '+g+')'}}
+    else if(m){cat=m[0];sl=m[1]}
+    else return null;
+    return {url:SITE_I+cat+'/'+(sl?sl+'/':''),txt:sl?'Page produit Integratech':'Page catégorie Integratech (variante non identifiée)'}}
+  return null}
+const siteBox=i=>{const s=siteOf(i);return s?el('p',{class:'note',style:'margin:8px 0'},el('a',{href:s.url,target:'_blank',rel:'noopener',text:'↗ '+s.txt}),' ',el('span',{text:''})):el('p',{class:'note',style:'margin:8px 0'},'Produit absent des sites web : fiche technique à demander à l\'ADV ou au chef de marque.')};
+function cell(c,i){const v=c[1](i),td=el('td'),k=c[2]||'';
+  if(k==='b'){td.textContent=v;td.className='b-'+v}
+  else if(k==='p')td.append(el('span',{class:'pos '+posCls(v),text:v}));
+  else if(k==='l'){td.className='lvl lvl-'+v;td.textContent=v}
+  else{td.textContent=v==null?'':v;if(k)td.className=k}return td}
+function viewRows(m){
+  const ids=RES.slice(0,m);let need=m-ids.length,slot=0;
+  for(const seg of VSEG){if(need<=0||slot>=SLOTMAX)break;const take=Math.min(need,seg.cnt,SLOTMAX-slot),res=[];
+    const f=seg.f||{allow:seg.sp.all,masks:null,m0:0};
+    walk(seg.sp,f.allow,f.masks,f.m0,seg.full||0,(cur,code)=>{res.push([cur.slice(),code]);return res.length>=take});
+    for(const [cur,code] of res)ids.push(materialize(seg.sp,cur,code,slot++));need-=take}
+  return ids;
+}
+function draw(){
+  const total=RES.length+VTOT,ids=viewRows(Math.min(SHOW,total)),m=ids.length;
+  if(VIEW==='cards'){const cc=$('#cards');cc.textContent='';const fr_=document.createDocumentFragment();for(const i of ids)fr_.append(card(i));cc.append(fr_)}
+  else{const th=$('#tbl thead'),tb=$('#tbl tbody');if(!th.firstChild)th.append(el('tr',null,el('th',{text:'N°'}),COLS.map(c=>el('th',{text:c[0]}))));tb.textContent='';
+    const f=document.createDocumentFragment();ids.forEach((i,r)=>{const tr=el('tr',{tabindex:'0'},el('td',{class:'num',text:String(r+1)}),COLS.map(c=>cell(c,i)));tr.onclick=()=>openRef(i);tr.onkeydown=e=>{if(e.key==='Enter')openRef(i)};f.append(tr)});tb.append(f)}
+  $('#count').textContent=total===0?'Aucun produit ne correspond : essayez de retirer un critère.':fr(total)+(total===1?' produit':' produits');
+  $('#hint').textContent=total>m?'· '+fr(m)+' affichés'+(m>=RES.length+SLOTMAX?' (limite d\'affichage : affinez les critères)':''):'';
+  $('#more').parentElement.classList.toggle('hidden',total<=m||m>=RES.length+SLOTMAX);
+}
+$('#more').onclick=()=>{SHOW+=200;draw()};
+/* ---------- fiche ---------- */
+const DET={};
+async function detail(i){
+  const b=D.brand[C.brand[i]],g=D.gamme[C.gamme[i]],fn=FILES[b+'|'+g];i=baseOf(i);
+  const [bn,sn]=fn.split('#');if(!DET[bn])DET[bn]=await getJSON('data/'+bn);
+  const f=DET[bn][sn];let lo=0,hi=f.idx.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(f.idx[mid]<i)lo=mid+1;else hi=mid}
+  const o={};for(const k in f.cols){const [vals,ids]=f.cols[k];const v=vals[ids[lo]];if(v!=='')o[k]=v}return o;
+}
+const HIDE=new Set(['6-signs code (TXT)','Designation NAV','Marque','Gamme','Type de luminaire']);
+function refChips(list){const w=el('div');for(const x of list){const j=CODEIDX.get(x.ref);const bc=j!=null?BC[D.brand[C.brand[j]]]:'var(--line)';
+  const b=el('button',{class:'refchip',style:'--bc:'+bc,type:'button'},x.ref,x.info?el('small',{text:x.info}):null);if(j!=null)b.onclick=()=>openRef(j);else b.style.cursor='default';w.append(b)}return w}
+function linkBlock(l,title){
+  const box=el('section',{class:'panel',style:'margin:12px 0'},el('h2',{text:title||(l[0]==='V'?'Variante conseillée (Integratech / Lébénoïd / SFEL)':'Prescription remplacée')}));
+  if(/^Aucune/.test(l[1]||'')){box.append(el('p',{class:'note',text:l[1]}));}
+  else{box.append(refChips(parseLinks(l[1])));if(l[2])box.append(el('div',null,'Niveau : ',el('span',{class:'lvl lvl-'+l[2],text:l[2]})));if(l[3])box.append(el('div',{class:'note',text:'Écarts : '+l[3]}));
+    if(l[4]){box.append(el('div',{class:'grp',text:l[0]==='V'?'Autres variantes possibles':'Autres prescriptions possibles'}),refChips(parseLinks(l[4])))}}
+  return box;
+}
+async function openRef(i){
+  const dr=$('#drawer'),body=$('#dbody');dr.classList.remove('hidden');body.textContent='Chargement…';
+  const close=()=>dr.classList.add('hidden');dr.onclick=e=>{if(e.target===dr)close()};document.onkeydown=e=>{if(e.key==='Escape')close()};
+  let o;try{o=await detail(i)}catch(e){body.textContent='Fiche indisponible ('+e.message+')';return}
+  const b=D.brand[C.brand[i]],t=D.type[C.type[i]];body.textContent='';body.style.setProperty('--bc',BC[b]);
+  body.append(el('div',{class:'dh'},el('div',{style:'display:flex;gap:14px;min-width:0'},el('div',{class:'big',style:'--bc:'+BC[b],html:icon(t)}),
+    el('div',{style:'min-width:0'},el('span',{class:'chip '+b,text:b}),' ',el('span',{class:'note',text:D.gamme[C.gamme[i]]+' · '+t}),el('div',{style:'font-family:var(--f-mono);font-size:18px;font-weight:600;margin:6px 0 2px;overflow-wrap:anywhere',text:C.code[i]}),el('div',{text:C.ds[i]}))),
+    el('button',{class:'btn',onclick:close,text:'Fermer'})));
+  const sp=(l,v)=>el('div',{class:'spec'},el('small',{text:l}),el('b',{text:v||'—'}));
+  body.append(el('div',{class:'specs'},sp('Puissance',C.pw[i]?C.pw[i]+' W':''),sp('Flux',C.flux[i]?fr(C.flux[i])+' lm':''),sp('Efficacité',C.eff[i]?C.eff[i]+' lm/W':''),sp('CCT',String(D.cct[C.cct[i]]||'')+(D.cct[C.cct[i]]?' K':'')),sp('IP / IK',(D.ipt[C.ipt[i]]||'n.c.')+' / '+(D.ikt[C.ikt[i]]||'n.c.')),sp('Dimensions',[C.l[i],C.w[i],C.h[i]].filter(Boolean).join(' × ')+([C.l[i],C.w[i],C.h[i]].some(Boolean)?' mm':'')||(C.d[i]?'Ø '+C.d[i]+' mm':'')),sp('Positionnement',D.pos[C.pos[i]]),sp('UGR',C.ugr[i]?String(C.ugr[i]):'')));
+  if(i>=N0)body.append(el('section',{class:'panel',style:'margin:12px 0;border-color:var(--warn)'},el('h2',{text:'Référence générée'}),el('p',{class:'note',style:'margin:0',text:'Construite à partir des options du catalogue SFEL 2026 (options : '+C.ol[i-N0]+'). Caractéristiques techniques reprises du même modèle '+C.code[C.base[i-N0]]+', sauf température de couleur, IP, gradation et détection déduites des options. Flux, puissance et dimensions sont à confirmer avec SFEL.'})));
+  body.append(siteBox(i));
+  const l=linkOf(i);if(l)body.append(linkBlock(l));
+  if(i<N0&&b==='SFEL'&&specFor(D.gamme[C.gamme[i]],C.code[i]))body.append(el('button',{class:'btn pri',style:'margin-bottom:12px',onclick:()=>{close();cfgFromRef(i)},text:'Modifier les options de cette référence'}));
+  body.append(el('section',{class:'panel',style:'margin:12px 0'},el('h2',{text:i>=N0?'Fiche de la référence existante la plus proche':'Fiche complète'}),el('dl',{class:'kv'},Object.keys(o).filter(k=>!HIDE.has(k)).map(k=>[el('dt',{text:k}),el('dd',{text:o[k]})]))));
+}
+/* ---------- constructeur de référence (piloté par les modèles du catalogue) ---------- */
+const CF={g:null,sp:null,vals:[],spe:[],kc:''};
+const slotName=(sp,k)=>{const o=sp.order[k],f=sp.fam[k],m=/#(\d+)$/.exec(o);return f+(m?' ('+m[1]+')':'')};
+function buildCfg(){
+  const gs=[...SPG.keys()].sort((a,b)=>a.localeCompare(b,'fr')),box=$('#cg');
+  const cnt={};for(let i=0;i<N0;i++)if(D.brand[C.brand[i]]==='SFEL'){const g=D.gamme[C.gamme[i]];cnt[g]=(cnt[g]||0)+1}
+  gs.forEach(g=>{const tot=(cnt[g]||0)+SPG.get(g).reduce((a,x)=>a+x.n,0);const b=el('button',{class:'gt',type:'button','aria-pressed':'false'},g,el('small',{text:fr(tot)}));b.onclick=()=>cfgSetGamme(g);box.append(b)});
+  $('#cmq').oninput=()=>cfgModels();
+  cfgSetGamme(SPG.has('SIPA')?'SIPA':gs[0]);
+}
+function cfgSetGamme(g,sp,vals){
+  CF.g=g;CF.spe=[];CF.kc='';const L=SPG.get(g);CF.sp=sp||L[0];CF.vals=vals||parseVals(CF.sp,C.code[CF.sp.ex]);
+  document.querySelectorAll('#cg .gt').forEach(b=>b.setAttribute('aria-pressed',String(b.firstChild.textContent===g)));
+  $('#cmq').value='';cfgModels();cfgOptions();cfgResult();
+}
+function cfgModels(){
+  const q=$('#cmq').value.trim().toLowerCase(),box=$('#cm');box.textContent='';let n=0;
+  for(const sp of SPG.get(CF.g)){const i=sp.ex;if(q&&!sp.p.toLowerCase().includes(q)&&!(C.ds[i]||'').toLowerCase().includes(q))continue;if(n++>=120)break;
+    const spec=[C.l[i]?C.l[i]+' mm':'',C.pw[i]?C.pw[i]+' W':'',C.flux[i]?fr(C.flux[i])+' lm':''].filter(Boolean).join(' · ');
+    const b=el('button',{class:'mrow',type:'button','aria-pressed':String(sp===CF.sp)},el('b',{text:sp.p}),el('span',{text:spec}));
+    b.onclick=()=>{CF.sp=sp;CF.spe=[];CF.kc='';CF.vals=parseVals(sp,C.code[sp.ex]);cfgModels();cfgOptions();cfgResult()};box.append(b)}
+  if(!n)box.append(el('p',{class:'note',style:'padding:10px',text:'Aucun modèle ne correspond.'}));
+}
+function conflict(sp,vals,k,v){if(!v)return false;const vi=sp.lists[k].indexOf(v);for(let j=0;j<sp.L;j++){if(j===k||!vals[j])continue;const wj=sp.lists[j].indexOf(vals[j]);const st=j<k?sp.fbn[j][k]:sp.fbn[k][j];if(st&&(j<k?st.has(wj*64+vi):st.has(vi*64+wj)))return true}return false}
+function cfgOptions(){
+  const box=$('#co'),sp=CF.sp;box.textContent='';
+  sp.order.forEach((o,k)=>{const f=sp.fam[k],ch=el('div',{class:'chips'});
+    for(const v of sp.lists[k]){const lab=(sp.l[f]&&sp.l[f][v])||'',bad=conflict(sp,CF.vals,k,v);
+      const b=el('button',{class:'opt'+(bad?' unseen':''),type:'button','aria-pressed':String(CF.vals[k]===v),title:bad?'Association jamais observée sur les références existantes':''},el('b',{text:v||'—'}),v===''&&!lab?'Aucune':lab);
+      b.onclick=()=>{CF.vals[k]=v;cfgOptions();cfgResult()};ch.append(b)}
+    box.append(el('div',{class:'fam'},el('div',{class:'grp',text:slotName(sp,k)}),ch))});
+  const sb=$('#cspe');sb.textContent='';const secs=OPT.gammes[CF.g]||[];const spe=new Map(),acc=new Map();
+  for(const s of secs){s.spe.forEach(x=>spe.set(x.code,x.label));s.acc.forEach(x=>acc.set(x.code,x.label))}
+  $('#cspeBox').classList.toggle('hidden',false);
+  {const has=c=>CF.spe.find(x=>x.k===c),ed=el('div',{style:'margin-top:8px;display:flex;gap:8px;flex-wrap:wrap'}),SK=[...spe].filter(([c])=>!/^H(9)?xx$/i.test(c));
+   sb.append(el('div',{class:'grp',text:'Options spécifiques (ajoutées en fin de référence, avant la classe électrique)'}),el('div',{class:'chips'},SK.map(([c,l])=>{const on=has(c),b=el('button',{class:'opt',type:'button','aria-pressed':String(!!on)},el('b',{text:c}),l);
+     b.onclick=()=>{if(on)CF.spe=CF.spe.filter(x=>x.k!==c);else{let code=c;if(c==='RAL')code='RAL9005';else if(/x{2,}/i.test(c)||/\//.test(c)){code=(prompt('Code complet de l\'option ('+c+')',c)||'').trim();if(!code)return}CF.spe.push({k:c,code})}cfgOptions();cfgResult()};return b})));
+   for(const x of CF.spe)if(x.k==='RAL'){const sel=el('select',null,['9003','9005','9010','9016','7016','7035'].map(v=>el('option',{value:'RAL'+v,text:'RAL '+v})));sel.value=x.code;sel.onchange=()=>{x.code=sel.value;cfgResult()};ed.append(el('label',{class:'note',text:'Couleur des embouts : '},sel))}
+   const ki=el('input',{type:'text',placeholder:'K015, K036…',value:CF.kc,style:'width:140px'});ki.oninput=()=>{CF.kc=ki.value.trim().toUpperCase();cfgResult()};ed.append(el('label',{class:'note',text:'Code couleur spéciale (facultatif) : '},ki));
+   sb.append(ed)}
+  if(acc.size){sb.append(el('div',{class:'grp',style:'margin-top:12px',text:'Accessoires de la gamme (références séparées)'}),el('div',{class:'chips'},[...acc].map(([c,l])=>el('span',{class:'opt',style:'cursor:default'},el('b',{text:c}),l))))}
+}
+function cfgResult(){
+  const box=$('#cres'),sp=CF.sp;box.textContent='';
+  const kc=sp.fam.indexOf('Classe électrique'),speS=CF.spe.map(x=>x.code).join('')+(CF.kc||''),hasSpe=!!speS;
+  const baseRef=sp.p+CF.vals.join(''),ref=sp.p+CF.vals.map((v,k)=>(k===kc?speS:'')+v).join('')+(kc<0?speS:'');let idx=hasSpe?null:CODEIDX.get(ref),eqRef=null;
+  if(idx==null&&!hasSpe){for(let i=0;i<N0;i++){if(D.gamme[C.gamme[i]]!==CF.g||!C.code[i].startsWith(sp.p))continue;const v=parseVals(sp,C.code[i]);let same=true;for(let k=0;k<v.length;k++)if((v[k]||'')!==(CF.vals[k]||'')){same=false;break}if(same){idx=i;eqRef=C.code[i];break}}}
+  const bad=CF.vals.some((v,k)=>v&&conflict(sp,CF.vals,k,v));
+  box.append(el('div',{class:'grp',style:'margin:0',text:'Référence construite'}));
+  const big=el('div',{class:'big'},el('span',{text:sp.p}));CF.vals.forEach((v,k)=>{if(k===kc&&speS)big.append(el('i',{style:'color:var(--warn);text-decoration:underline',text:speS}));if(v)big.append(el('i',{style:'color:'+['var(--accent)','var(--ok)','var(--warn)','var(--sfel)','var(--integ)','var(--leb)'][k%6],text:v}))});if(kc<0&&speS)big.append(el('i',{style:'color:var(--warn);text-decoration:underline',text:speS}));box.append(big);
+  box.append(hasSpe?el('span',{class:'st mid',text:'Avec option(s) spécifique(s) « '+speS+' » : à la carte, faisabilité et prix à confirmer avec SFEL (base de départ : '+baseRef+')'}):idx!=null?el('span',{class:'st ok',text:eqRef?'Existe dans la base sous l\'ordre « '+eqRef+' » (même produit)':'Existe dans la base'}):bad?el('span',{class:'st no',text:'Association jamais observée : à vérifier avec SFEL'}):el('span',{class:'st mid',text:'Valide d\'après le catalogue · absente de la base'}));
+  box.append(el('div',{style:'display:flex;gap:8px;margin:10px 0'},el('button',{class:'btn',type:'button',onclick:()=>{try{navigator.clipboard.writeText(ref)}catch(e){}},text:'Copier la référence'}),idx!=null?el('button',{class:'btn pri',type:'button',onclick:()=>openRef(idx),text:'Ouvrir la fiche'}):null));
+  box.append(el('div',{class:'note',text:'Ordre des codes = ordre habituellement facturé (alimentation, température, optique, câblage… classe électrique), relevé sur les factures 2020-2026. La position des options jamais facturées (ex. cellule, précâblage) est estimée : à confirmer avec SFEL.'}));
+  let ri=idx,approx=false;
+  if(ri==null){let bs=-1;for(let i=0;i<N0;i++){if(D.brand[C.brand[i]]!=='SFEL'||D.gamme[C.gamme[i]]!==CF.g||!C.code[i].startsWith(sp.p))continue;
+      const v=parseVals(sp,C.code[i]);let sc=0;for(let k=0;k<v.length;k++)if(v[k]===CF.vals[k])sc++;if(sc>bs){bs=sc;ri=i}}approx=true}
+  box.append(el('div',{class:'grp',text:'Correspondances Integratech / Lébénoïd'}));
+  const l=ri!=null?linkOf(ri):null;
+  if(!LINKS)box.append(el('p',{class:'note',text:'Chargement des correspondances…'}));
+  else if(!l)box.append(el('p',{class:'note',text:'Aucune correspondance enregistrée pour cette référence.'}));
+  else{if(approx)box.append(el('p',{class:'note',text:'Référence absente de la base : correspondances de la référence existante la plus proche ('+C.code[ri]+').'}));
+    if(/^Aucune/.test(l[1]||''))box.append(el('p',{class:'note',text:l[1]}));else{box.append(refChips(parseLinks(l[1])));if(l[2])box.append(el('div',null,'Niveau : ',el('span',{class:'lvl lvl-'+l[2],text:l[2]})));if(l[3])box.append(el('div',{class:'note',text:'Écarts : '+l[3]}))}}
+}
+function cfgFromRef(i){
+  const g=D.gamme[C.gamme[i]],sp=specFor(g,C.code[i]);if(!sp)return;
+  document.querySelector('[data-tab="cfg"]').click();cfgSetGamme(g,sp,parseVals(sp,C.code[i]));
+}
+/* ---------- onglet options ---------- */
+function buildOpts(){
+  const gs=Object.keys(OPT.gammes).sort((a,b)=>a.localeCompare(b,'fr')),og=$('#og');gs.forEach(g=>og.append(el('option',{value:g,text:g})));
+  og.onchange=()=>showOpt(og.value);showOpt(gs[0]);
+  OPT.accessoires_generaux.forEach(p=>$('#ogen').append(el('details',{style:'margin:6px 0'},el('summary',{text:'Page '+p.page+' — '+p.titre+(p.codes.length?'  ·  codes : '+p.codes.slice(0,8).join(', ')+(p.codes.length>8?'…':''):'')}),el('pre',{class:'txt',text:p.texte}))));
+}
+function showOpt(g){
+  const c=$('#ocontent');c.textContent='';
+  if(g==='DIADEM')c.append(el('p',{class:'note',style:'color:var(--warn)',text:'Gamme Diadem : présente au catalogue, aucune référence détaillée dans la base.'}));
+  (OPT.gammes[g]||[]).forEach(s=>{
+    const b=el('div',{class:'panel',style:'margin:10px 0'},el('h2',{text:s.titre+' — catalogue p. '+s.page}));
+    s.std.forEach(f=>b.append(el('div',{class:'fam'},el('div',{class:'grp',text:f.famille}),el('div',{class:'chips'},f.valeurs.map(v=>el('span',{class:'opt',style:'cursor:default'},el('b',{text:v.code||'—'}),v.label,v.default?el('small',{text:'  par défaut'}):null))))));
+    if(s.spe.length)b.append(el('div',{class:'fam'},el('div',{class:'grp',text:'Options spécifiques'}),el('div',{class:'chips'},s.spe.map(x=>el('span',{class:'opt',style:'cursor:default'},el('b',{text:x.code}),x.label)))));
+    if(s.acc.length)b.append(el('div',{class:'fam'},el('div',{class:'grp',text:'Accessoires'}),el('div',{class:'chips'},s.acc.map(x=>el('span',{class:'opt',style:'cursor:default'},el('b',{text:x.code}),x.label)))));
+    c.append(b)});
+}
+/* ---------- recherche à partir d'une ligne de CCTP ---------- */
+const nz=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const STOPW=new Set(['de','du','la','le','les','des','en','et','avec','sans','un','une','au','aux','a','pour','sur']);
+let VOC=null;
+function lev1(a,b){if(a===b)return true;if(Math.abs(a.length-b.length)>1||a.length<5)return false;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;if(a.length===b.length)return a.slice(i+1)===b.slice(i+1);const [x,y]=a.length>b.length?[a,b]:[b,a];return x.slice(i+1)===y.slice(i)}
+function buildVoc(){if(VOC)return VOC;const mp=new Map(),skip=new Set(['Température de couleur','Étanchéité','Alimentation','Autre','Classe électrique']);
+  for(const sp of SPECS)sp.fam.forEach((f,k)=>{if(skip.has(f))return;sp.attrs[k].forEach(a=>{if(!a.lab)return;const n=nz(a.lab);if(!n||/^[0-9 ]+$/.test(n)||mp.has(n)||TYPEKW.some(([re])=>re.test(' '+a.lab.toLowerCase()+' '))||/^classe\b/.test(n))return;const tk=n.split(' ').filter(w=>!STOPW.has(w));if(!tk.length||(tk.length===1&&tk[0].length<4))return;mp.set(n,{lab:a.lab,n,tk})})});
+  return VOC=[...mp.values()]}
+function detectOpts(raw){const V=buildVoc(),tx=nz(raw).split(' ').filter(Boolean),hit=[];
+  for(const v of V){let ok=true;for(const w of v.tk){if(!tx.some(x=>x===w||lev1(x,w))){ok=false;break}}if(ok)hit.push(v)}
+  const keep=hit.filter(a=>!hit.some(b=>b!==a&&b.tk.length>a.tk.length&&a.tk.every(w=>b.tk.some(y=>y===w||lev1(y,w)))));
+  const seen=new Set(),out=[];for(const v of keep){const key=v.tk.join(' ');if(seen.has(key))continue;seen.add(key);out.push(v.lab)}
+  return out.slice(0,8)}
+const dn=x=>nz(x).replace(/\b(couvercle|vasque|cache|globe|couverture)\b/g,'diffuseur');
+function realMiss(i,optq){const pr=picksReal(i),tx=dn((C.dl[i]||'')+' '+(C.ds[i]||'')+(C.xopal&&C.xopal[i]?' diffuseur opale':''));const sm=x=>x.replace(/semi[ -]?opale/g,'semiopale');const tx2=sm(tx);return optq.filter(q=>{const qn=dn(q.n);if(/^traversant|^cablage traversant/.test(qn)&&D.cab[C.cab[i]]==='Oui')return false;{const T2=' '+tx2+' ';if(T2.includes(' '+qn+' ')||qn.split(' ').every(w=>T2.includes(' '+w+' ')))return false}if(pr)for(let k=0;k<pr.sp.fam.length;k++){const vi=pr.sp.lists[k].indexOf(pr.vals[k]);if(vi>=0&&nz(pr.sp.attrs[k][vi].lab)===q.n)return false}return true}).map(q=>q.l)}
+const TYPEKW=[[/ruban|bandeau|\bstrip\b|guirlande|n[ée]on flex|\bw\s*\/\s*m\b|lm\s*\/\s*m\b/,'Ruban LED'],[/profil[ée]?s?\b|goulotte alu/,'Profilé LED'],[/pav[ée]|dalle|panneau|panel\b|plaque led|platine led|encastr[ée] (?:type )?\d{2,3}\s?[x×]\s?\d{2,3}/,'Dalle LED'],[/tubulaire|\btubes?\b|\bt8\b|n[ée]on\b/,'Tubulaire'],[/r[ée]glette (?:[ée]tanche|stagna)|[ée]tanche.*r[ée]glette/,'Réglette étanche'],[/r[ée]glette/,'Réglette'],[/downlight|downray|spot encastr|\bspots?\b|encastr[ée] (?:type )?(?:rond|ø)/,'Downlight'],[/hublot|tortue/,'Hublot'],[/applique/,'Applique'],[/highbay|high bay|cloche|gamelle|industriel/,'Highbay'],[/projecteur sur rail|spot sur rail|\brail\b.*(?:spot|projecteur)/,'Projecteur sur rail'],[/rail triphas/,'Rail triphasé'],[/projecteur|floodlight|\bflood\b/,'Projecteur'],[/lustre|\bpendant\b|suspension d[ée]co/,'Suspension'],[/plafonnier/,'Plafonnier'],[/lin[ée]aire/,'Linéaire'],[/[ée]clairage public|lanterne|candélabre|\bm[âa]t\b/,'Éclairage public'],[/alimentation|\bdriver\b|transformateur/,'Alimentation LED']];
+const TCOMP={'Ruban LED':['Profilé LED'],'Tubulaire':['Réglette étanche','Linéaire','Réglette'],'Réglette étanche':['Tubulaire','Linéaire','Réglette'],'Réglette':['Réglette étanche','Tubulaire','Linéaire'],'Linéaire':['Tubulaire','Réglette étanche','Suspension'],'Dalle LED':['Plafonnier','Downlight'],'Plafonnier':['Hublot','Dalle LED'],'Hublot':['Plafonnier'],'Highbay':['Suspension','Projecteur'],'Suspension':['Linéaire','Highbay']};
+const NUMRE='(\\d{1,3}(?: \\d{3})+|\\d+)';
+const NUMD='(\\d{1,3}(?: \\d{3})+|\\d+(?:[.,]\\d+)?)';
+const toNum=x=>parseFloat(String(x).replace(/ /g,'').replace(',','.'));
+
+function detectConc(raw){
+  if(!CONC||!CONC.ix)return null;const n=' '+nz(raw)+' ',X=CONC,ix=X.ix;
+  if(!X.bn)X.bn=[...new Set(X.b.map(r=>r[ix.br]))].map(b=>({b,n:nz(b).replace(/\s*\(.*$/,'').trim()})).filter(x=>x.n.length>=4&&!/non identifi/.test(x.n));
+  const hit=X.bn.filter(x=>n.includes(' '+x.n+' ')||n.includes(' '+x.n.split(' ')[0]+' '));
+  let best=null,bs=0;
+  for(const h of hit){for(const r of X.b){if(r[ix.br]!==h.b)continue;
+    const toks=nz(r[ix.ga]).split(' ').filter(w=>w.length>=3&&w!==h.n);let sc=0;for(const w of toks)if(n.includes(' '+w+' '))sc+=3;
+    const ref=nz(r[ix.ref]);if(ref.length>=4&&n.includes(ref))sc+=10;
+    const p=r[ix.lab]?/(\d+(?:[.,]\d+)?)\s*w/i.exec(String(r[ix.des])):null;if(sc>0&&p&&new RegExp('\\b'+p[1].replace('.',',?')+'\\s?w\\b').test(String(raw).toLowerCase().replace(/\./g,',')))sc+=2;
+    if(sc>bs){bs=sc;best=r}}}
+  return best&&bs>=3?(best[ix.lab]+' ('+best[ix.id]+')'):null}
+function parseCCTP(raw){
+  let t=' '+raw.toLowerCase().replace(/[  ]/g,' ').replace(/\s+/g,' ')+' ';const o={},notes=[];
+  let best=-1;for(const [re,ty] of TYPEKW){const m=re.exec(t);if(m&&(best<0||m.index<best)){best=m.index;o.type=ty}}
+  if(!o.type&&/suspendu|suspension|pendulaire/.test(t)&&!/ruban|bandeau|profil/.test(t)&&!/[ée]tanch|stagn/.test(t)){o.type='Suspension';o.typeWeak=1}
+  if(!o.type&&/[ée]tanch|stagn/.test(t)&&!/(?:profil|ruban|bandeau|alimentation|driver)/.test(t)){o.type='Réglette étanche';o.typeWeak=1}
+  let m;
+  m=/(\d+(?:[.,]\d+)?)\s*w\s*\/\s*m\b/.exec(t);if(m){o.pw=toNum(m[1]);o.permeter=1;t=t.replace(m[0],' ')}
+  m=new RegExp(NUMRE+'(?:[.,]\\d+)?\\s*lm\\s*\\/\\s*m\\b').exec(t);if(m){o.flux=toNum(m[1]);o.permeter=1;t=t.replace(m[0],' ')}
+  m=/\b(12|24|48|230|220)\s*v(?:\s?(?:dc|cc|ac))?\b/.exec(t);if(m){o.volt=+m[1];t=t.replace(m[0],' ')}
+  m=/(\d{2,3})\s*°(?!\s*[kc])/.exec(t);if(m&&+m[1]<=360){o.angle=+m[1];t=t.replace(m[0],' ')}
+  m=/(\d+(?:[.,]\d+)?)\s*lm\s*[\/,'’]\s*w/.exec(t);if(m){o.eff=toNum(m[1]);t=t.replace(m[0],' ')}
+  m=new RegExp(NUMRE+'(?:[.,]\\d+)?\\s*(?:lm|lumens?)\\b').exec(t);
+  if(m&&o.flux==null){o.flux=toNum(m[1]);t=t.replace(m[0],' ')}
+  else if(o.flux==null){m=/\b(\d{3,5})\s?1m\b/.exec(t);if(m){o.flux=toNum(m[1]);notes.push('flux lu « '+m[1]+' lm » (le texte semble contenir une coquille)');t=t.replace(m[0],' ')}}
+  m=/\bip\s*([0-9]{2})\b/.exec(t);if(m){o.ip=+m[1];t=t.replace(m[0],' ')}else if(/[ée]tanche|stagne|ext[ée]rieur/.test(t))o.ip=65;
+  if(/anti.?vandal|vandal/.test(t)){o.van='Oui';if(!o.ik)o.ik=10}
+  m=/classe\s*(?:d['’]isolation\s*)?(iii|ii|i|1|2|3|\|)(?![a-z])/.exec(t);if(m)o.classe={'iii':'III','3':'III','ii':'II','2':'II','i':'I','1':'I','|':'I'}[m[1]];
+  m=/\b(\d{3})\s*°\s*c\b/.exec(t);if(m&&+m[1]>=550&&+m[1]<=960){o.gw=+m[1]}
+  m=/\bl\d0(?:\s?b\d+)?(?:\s*\/\s*l\d0(?:\s?b\d+)?)?\s*[>≥=:]*\s*(\d{1,3}(?: \d{3})+|\d{4,6})\s*(?:h|heures?)\b/.exec(t);if(m)o.life=toNum(m[1]);
+  else{m=/dur[ée]e de vie[^0-9]{0,40}(\d{1,3}(?: \d{3})+|\d{4,6})\s*(?:h|heures?)\b/.exec(t);if(m)o.life=toNum(m[1])}
+  m=/sdcm\s*[<≤]?\s*(\d)/.exec(t);if(m)o.sdcm=+m[1];
+  m=/photobiolog\w*[^.;]{0,40}?(?:groupe|gr)\s*(\d)|(?:groupe|gr)\s*(\d)[^.;]{0,40}?photobiolog/.exec(t);if(m)o.gr=+(m[1]||m[2]);
+  m=/garantie[^0-9]{0,40}(\d+)\s*ans?|(\d+)\s*ans de garantie/.exec(t);if(m)o.gar=+(m[1]||m[2]);
+  if(/suspendu|suspension|pendulaire|en suspension/.test(t))o.fix='Suspension';
+  else if(/sur rail|fixation sur rail/.test(t)&&o.type!=='Rail triphasé')o.fix='Sur rail';
+  else if(/en saillie|apparent|en applique|surface\b|sailli/.test(t))o.fix='Saillie';
+  else if(/encastr/.test(t))o.fix='Encastré';
+  else if(/collier/.test(t))o.fix='Colliers';
+  if(/circulaire|\brond[e]?\b/.test(t)&&!/projecteur/.test(t))o.forme='circulaire';else if(/carr[ée]e?\b/.test(t))o.forme='carrée';
+  {const tt=t.replace(/blanc (?:neutre|chaud|froid)/g,' ');const DW=['noir','blanc','gris','argent','alu','aluminium','inox','polycarbonate','pmma','verre','opale','prismatique','microprismatique','clair','transparent','satine','chrome','laiton','bois','anodise','lentille','symetrique','asymetrique','extensive'];
+    const tn=' '+tt.normalize('NFD').replace(/[\u0300-\u036f]/g,'')+' ';const hits=DW.filter(w=>new RegExp('\\b'+w+'s?\\b').test(tn));const ral=[...tn.matchAll(/ral\s?(\d{4})/g)].map(x=>'RAL'+x[1]);if(hits.length||ral.length)o.dw=hits.concat(ral).join(' ; ')}
+  if(/traversant|c[âa]blage (?:en )?ligne|mise en ligne|repiquage/.test(t))o.cab='Oui';
+  if(/\bclean\b|salles? blanches?|salles? propres?|clean ?room/.test(t))o.clean='Oui';
+  if(/y compris (?:le )?driver|driver (?:inclus|compris|int[ée]gr[ée])|avec driver|incl\.? driver|driver incl/.test(t)&&!/sans driver/.test(t))o.drv='Oui';
+  {const nt=' '+nz(raw)+' ';const B=[];if(/ sfel /.test(nt))B.push('SFEL');if(/ (?:integratech|itgt|integra ?tech|integra tech) /.test(nt))B.push('Integratech');if(/ (?:lebenoid|lbnd) /.test(nt))B.push('Lébénoïd');if(B.length===1)o.brand=B[0];
+    if(!window.__GN){const STOP=new Set(['option','basic','compact','soft','deep','cube','digital','downlight','special','protect','profiles','disc','urban','horizon','tops','lips','eo','filament','factory','dune','mars','cory','sola','squad','arche','atoll','mona','turbo','rgd','rgbw','rgbtw','stub','alimentations led','lanternes','tracklights','special forte puissance']);window.__GN=[...new Set(D.gamme.filter(Boolean))].map(g=>({g,n:nz(g),st:STOP.has(nz(g))})).filter(x=>x.n.length>=3);{const f=new Map();for(const x of window.__GN){const w=x.n.split(' ')[0];if(x.n.includes(' ')&&w.length>=5&&!STOP.has(w)&&!/^(led|monocolor|multicolor|special|grande|rail|tracklight|blocs|alimentations|connecteur|slim|integra)/.test(w)){if(!f.has(w))f.set(w,[]);f.get(w).push(x)}}const ex=[];for(const [w,L] of f)if(!window.__GN.some(x=>x.n===w))ex.push({g:L[0].g,n:w,st:false,al:L.map(x=>x.g)});window.__GN=window.__GN.concat(ex)}window.__GN.sort((a,b)=>b.n.length-a.n.length)}
+    const G=[];let tt=nt;for(const x of window.__GN){const re=' '+x.n+' ';if(tt.includes(re)){if(x.st&&!(tt.includes(' gamme '+x.n+' ')||tt.includes(' '+x.n+' sfel ')||tt.includes(' sfel '+x.n+' ')||tt.includes(' integratech '+x.n+' ')))continue;G.push(...(x.al||[x.g]));tt=tt.split(re).join(' ')}}
+    if(G.length)o.gam=G.join(' ; ')}
+  {const cd=detectConc(raw);if(cd)o.conc=cd}
+  if(/fabriqu[ée]e? en france|made in france|origine france/.test(t))o.fr='Oui';
+  if(/[ée]clairage de secours int[ée]gr|avec secours|kit de secours|bloc de secours int[ée]gr/.test(t))o.sec='Oui';
+  m=/\bqt[ée]\s*[=:]?\s*(\d+)/.exec(t);if(m)o.qty=+m[1];
+  m=/(?:localisation|position)\s*[:•]?\s*(.{3,70}?)(?:\s+et suivant|\s+suivant|\.\s|\.$|$)/.exec(t);if(m)o.loc=m[1].trim();
+  if(/\bbaes\b|\bbaeh\b|\bbapi\b|bloc autonome|[ée]clairage de s[ée]curit[ée]|\bsati\b|bloc (?:de )?secours/.test(t))o.type='Bloc de secours';
+  m=/\bik\s*([0-9ilo]{1,2})\b/.exec(t);if(m){o.ik=+m[1].replace(/[il]/g,'1').replace(/o/g,'0');t=t.replace(m[0],' ')}
+  m=/\b(?:irc|cri|ra)\s*(?:[>≥]|sup[ée]rieur[e]?\s*[àa]|min\.?)?\s*=?\s*(\d{2})\b/.exec(t);if(m){o.irc=+m[1];t=t.replace(m[0],' ')}
+  m=/\bugr\s*[<≤]?\s*=?\s*(\d{2})\b/.exec(t);if(m){o.ugr=+m[1];t=t.replace(m[0],' ')}
+  m=/\b(\d)0000\s*°?\s*k\b/.exec(t);if(m){o.cct=+m[1]*1000;notes.push('température lue '+o.cct+' K (« '+m[0].trim()+' » semble une coquille)')}
+  else{m=/(\d)\s?(\d{3})\s*°?\s*k\b/.exec(t);if(m)o.cct=+(m[1]+m[2])}
+  if(o.cct==null){if(/blanc neutre/.test(t))o.cct=4000;else if(/blanc chaud/.test(t))o.cct=3000;else if(/blanc froid/.test(t))o.cct=6500}
+  if(/\bdali\b/.test(t))o.grad='DALI';else if(/1\s?-\s?10\s?v/.test(t))o.grad='1-10V';else if(/gradable|dimmable|variable/.test(t))o.grad='any';
+  m=new RegExp('[øØ⌀]\\s*'+NUMD+'\\s*[x×]\\s*'+NUMD).exec(t);if(m){o.dia=toNum(m[1]);o.hgt=toNum(m[2]);t=t.replace(m[0],' ')}
+  m=new RegExp(NUMD+'\\s*[x×]\\s*[øØ⌀]\\s*'+NUMD).exec(t);if(m){o.len=toNum(m[1]);o.dia=toNum(m[2]);t=t.replace(m[0],' ')}
+  m=new RegExp(NUMD+'\\s*[x×]\\s*'+NUMD+'(?:\\s*[x×]\\s*(\\d+))?').exec(t);
+  if(m){const a=toNum(m[1]),b=toNum(m[2]);let A=Math.max(a,b),B=Math.min(a,b);
+    if((o.permeter||/ruban|bandeau/.test(t))&&/profil/.test(t)&&A<=80){o.pwid=A;o.phgt=B}
+    else{if(A<=150){A*=10;B*=10}o.len=A;o.wid=B;if(m[3])o.hgt=toNum(m[3])}t=t.replace(m[0],' ')}
+  m=/(?:d[ée]coupe|per[çc]age|trou|encastrement)\s*(?:de|:)?\s*(?:ø|⌀|diam[èe]tre)?\s*:?\s*(\d+)\s*(mm|cm)?|(?:ø|⌀|diam[èe]tre)\s*(?:de\s*)?(?:d[ée]coupe|per[çc]age|trou)\s*:?\s*(\d+)/.exec(t);if(m){o.cut=+(m[1]||m[3])*(m[2]==='cm'?10:1);t=t.replace(m[0],' ')}
+  m=/(?:ø|⌀|diam[èe]tre)\s*:?\s*(\d+)\s*(mm|cm)?/.exec(t);if(m){o.dia=+m[1]*(m[2]==='cm'?10:1);t=t.replace(m[0],' ')}
+  m=/\b(\d)\s?m\s?(\d{1,2})\b(?!\s?m)/.exec(t);if(m&&!o.len){o.len=+m[1]*1000+(m[2].length===1?+m[2]*100:+m[2]*10);t=t.replace(m[0],' ')}
+  m=/\b(?:(?:longueur|long\.?)\s*[:=]?|l\s*[:=])\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|ml|m(?:[eè]tres?)?)?(?![a-z\d])/.exec(t);if(m&&!o.len){const v=toNum(m[1]),u=m[2]||'';o.len=Math.round(/^(m|ml|m[eè]tres?)$/.test(u)||(!u&&v<=12)?v*1000:u==='cm'?v*10:v);t=t.replace(m[0],' ')}
+  m=/largeur\s*:?\s*(\d+)\s*(mm|cm)?/.exec(t);if(m){o.wid=+m[1]*(m[2]==='cm'?10:1);t=t.replace(m[0],' ')}
+  m=/(?:hauteur|poids)[^a-z]{0,3}\d+[.,]?\d*\s*(?:mm|cm|kg)/.exec(t);while(m){t=t.replace(m[0],' ');m=/(?:hauteur|poids)[^a-z]{0,3}\d+[.,]?\d*\s*(?:mm|cm|kg)/.exec(t)}
+  const mm=[...t.matchAll(new RegExp(NUMRE+'(?:[.,]\\d+)?\\s*mm\\b','g'))].map(x=>toNum(x[1]));
+  if(!o.len&&!o.dia&&mm.length){o.len=Math.max(...mm);if(!o.dia){const small=mm.filter(x=>x!==o.len&&x<=150);if(small.length&&/tubulaire|r[ée]glette|tube/.test(t))o.dia=small[0]}}
+  if(!o.len&&!o.permeter){m=/(\d+(?:[.,]\d+)?)\s*(?:ml|m[eè]tres?|m)(?![a-zà-ÿ\d\/])/.exec(t);if(m&&toNum(m[1])>0&&toNum(m[1])<=12){o.len=Math.round(toNum(m[1])*1000);t=t.replace(m[0],' ')}}
+  if(!o.len){m=/(\d+(?:[.,]\d+)?)\s*cm\b/.exec(t);if(m)o.len=Math.round(toNum(m[1])*10);else m=/(\d+[.,]\d+)\s*m\b(?!m)/.exec(t);if(!o.len&&m)if(m)o.len=Math.round(toNum(m[1])*1000)}
+  if(['Downlight','Hublot','Plafonnier'].includes(o.type)&&o.len&&!o.wid&&!o.dia){o.dia=o.len;delete o.len}
+  t=t.replace(/(\d+(?:[.,]\d+)?)\s*(?:lm|lumens?)/g,' ');
+  m=/\b(\d+(?:[.,]\d+)?)\s*w\b(?!\s*\/)/.exec(t);if(m&&o.pw==null&&toNum(m[1])<=1000)o.pw=toNum(m[1]);
+  if(!o.type&&o.len>=600&&/[ée]tanche/.test(t)){o.type='Réglette étanche';notes.push('type non précisé : « Réglette étanche » déduit (étanche + longueur)')}
+  if(!o.type&&o.dia&&o.len>=500){o.type='Tubulaire';notes.push('type non précisé : « Tubulaire » déduit de la longueur et du diamètre')}
+  if(o.permeter||(/ruban|bandeau/.test(t)&&/profil/.test(t)))o.type='Ruban LED';
+  return {o,notes};
+}
+const REL={cab:['Réglette étanche','Tubulaire','Linéaire','Réglette'],drv:['Dalle LED'],clean:[],cut:['Downlight'],forme:[],hgt:[],volt:['Ruban LED','Alimentation LED'],angle:['Ruban LED','Projecteur','Downlight','Highbay','Éclairage public','Projecteur sur rail'],pwid:['Ruban LED'],phgt:['Ruban LED'],gw:[],sdcm:[],gr:[],gar:[],fr:[],van:[],sec:[]};
+const CRIT=[['type','Type','sel'],['len','Longueur (mm)','n'],['wid','Largeur (mm)','n'],['dia','Diamètre (mm)','n'],['hgt','Hauteur (mm)','n'],['cut','Diamètre de découpe (mm)','n'],['pw','Puissance (W)','n'],['flux','Flux (lm)','n'],['eff','Efficacité (lm/W)','n'],['cct','Temp. couleur (K)','n'],['irc','IRC min.','n'],['ip','IP min.','n'],['ik','IK min.','n'],['ugr','UGR max.','n'],['volt','Tension (V)','n'],['angle','Angle (°)','n'],['classe','Classe électrique','selc'],['fix','Pose / fixation','selx'],['forme','Forme','self'],['dw','Mots de la désignation (couleur, diffuseur, matière…)','t'],['life','Durée de vie L80 min. (h)','n'],['gw','Fil incandescent min. (°C)','n'],['sdcm','SDCM max.','n'],['gr','Risque photobiologique : groupe max.','n'],['gar','Garantie min. (ans)','n'],['fr','Fabriqué en France','selb'],['van','Anti-vandale','selb'],['sec','Secours intégré','selb'],['pwid','Profilé associé : largeur (mm)','n'],['phgt','Profilé associé : hauteur (mm)','n'],['opts','Options demandées (séparées par ;)','t'],['grad','Gradation','selg'],['conc','Concurrent ciblé (efface pour ignorer)','t'],['clean','Salle blanche','selb'],['cab','Câblage traversant','selb'],['drv','Driver inclus','selb'],['brand','Marque (SFEL, Integratech, Lébénoïd)','t'],['gam','Nom de produit / gamme','t']];
+function buildCctp(){
+  const box=$('#cctpPills');
+  for(const [k,l,kind] of CRIT){
+    let c;
+    if(kind==='sel'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisé)'}),D.type.filter(Boolean).concat(['Bloc de secours']).map(t=>el('option',{value:t,text:t})))}
+    else if(kind==='selc'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),['I','II','III'].map(t=>el('option',{value:t,text:'Classe '+t})))}
+    else if(kind==='selx'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),['Suspension','Encastré','Saillie','Sur rail','Colliers'].map(t=>el('option',{value:t,text:t})))}
+    else if(kind==='self'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),['circulaire','carrée','rectangulaire'].map(t=>el('option',{value:t,text:t})))}
+    else if(kind==='selb'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisé)'}),el('option',{value:'Oui',text:'Oui'}))}
+    else if(kind==='selg'){c=el('select',{id:'cc_'+k},el('option',{value:'',text:'(non précisée)'}),el('option',{value:'DALI',text:'DALI'}),el('option',{value:'1-10V',text:'1-10V'}),el('option',{value:'any',text:'Gradable (tous types)'}))}
+    else c=el('input',{id:'cc_'+k,type:'text',inputmode:kind==='t'?'text':'decimal'});
+    c.addEventListener(kind==='n'||kind==='t'?'input':'change',()=>{clearTimeout(tmr);tmr=setTimeout(cctpMatch,200)});
+    const lb=el('label',{class:'f'},el('span',{text:l}),c);lb.dataset.k=k;box.append(lb);
+  }
+  const load=(o,notes,raw)=>{CCTPWEAK=o.typeWeak?o.type:null;if(raw!=null){const op=detectOpts(raw);if(op.length)o.opts=op.join(' ; ')}for(const [k] of CRIT){const c=$('#cc_'+k);c.value=o[k]!=null?String(o[k]):''}CCTPNOTES=notes||[];cctpMatch()};
+  $('#cctpGo').onclick=async()=>{
+    try{await initConc()}catch(e){}
+    const raw=$('#cctpTxt').value,sum=$('#cctpSum');sum.textContent='';
+    const parts=raw.split(/(?=\btype\s*[\dIl]+(?:[.,]\d+)?\s*[:.=])/i).map(x=>x.trim()).filter(x=>x.length>15);
+    if(parts.length<2){{const q=parseCCTP(raw);load(q.o,q.notes,raw)}return}
+    const bl=parts.map(p=>{const {o,notes}=parseCCTP(p);const lab=(/^type\s*([\dIl]+(?:[.,]\d+)?)/i.exec(p)||[,'?'])[1].replace(/[Il]/g,'1');const op=detectOpts(p);if(op.length)o.opts=op.join(' ; ');if(o.opts)o.optq=op.map(x=>({l:x,n:nz(x)}));return {lab,o,notes,top:Object.keys(o).length?cctpTop(o):[],txt:p}});
+    const tb=el('tbody');
+    bl.forEach((b,n)=>{const t=b.top[0],crit=CRIT.filter(x=>b.o[x[0]]!=null).map(x=>x[1].replace(/ \(.*\)| min\.| max\./g,'')+' '+b.o[x[0]]).join(' · ');
+      const tr=el('tr',{tabindex:'0'},el('td',{text:'Type '+b.lab}),el('td',{class:'long',text:b.txt.slice(0,90)+'…'}),el('td',{class:'long',text:crit||'rien de reconnu'}),el('td',{class:'mono',text:t?(t.i>=0?C.code[t.i]:t.code):'—'}),el('td',null,t?el('span',{class:'score '+(t.score>=85?'hi':t.score<60?'lo':''),text:t.score+' %'}):''));
+      const go=()=>{load(b.o,b.notes,b.txt);$('#cctpRes').scrollIntoView({block:'nearest'})};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter')go()};tb.append(tr)});
+    sum.append(el('div',{class:'bar'},el('span',{class:'n',text:bl.length+' lignes détectées'}),el('span',{class:'note',text:'Cliquez sur une ligne pour voir le détail des correspondances.'})),
+      el('div',{class:'tablewrap',style:'max-height:340px'},el('table',null,el('thead',null,el('tr',null,['Ligne','Texte','Critères retenus','Meilleur produit','Score'].map(h=>el('th',{text:h})))),tb)));
+    load(bl[0].o,bl[0].notes,bl[0].txt)};
+  $('#cctpClear').onclick=()=>{$('#cctpSum').textContent='';$('#cctpTxt').value='';for(const [k] of CRIT)$('#cc_'+k).value='';CCTPNOTES=[];cctpMatch()};
+  $('#cctpTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))$('#cctpGo').click()});
+}
+let CCTPNOTES=[];
+setTimeout(()=>{try{pillVis()}catch(e){}},0);
+let CCTPWEAK=null;
+function cctpCrit(){const o={};for(const [k,,kind] of CRIT){const v=$('#cc_'+k).value.trim();if(v==='')continue;o[k]=kind==='n'?toNum(v):v}if(o.opts){o.optq=o.opts.split(/;/).map(x=>x.trim()).filter(Boolean).map(x=>({l:x,n:nz(x)}))}for(const k in o)if(typeof o[k]==='number'&&isNaN(o[k]))delete o[k];if(o.type&&o.type===CCTPWEAK)o.typeWeak=1;if(o.conc&&CONC&&CONC.eq){const m=/CONC-[\w-]+/.exec(o.conc),L=m?CONC.eq.get(m[0]):null;if(L){o.cmap=new Map(L.map(r=>[r[4],r]));o.cgam=new Set(L.map(r=>r[2]+'|'+r[3]))}}return o}
+const W={brand:14,gam:26,cab:12,conc:14,clean:10,drv:12,cut:14,fix:14,forme:14,dw:8,classe:6,life:6,gw:4,sdcm:3,gr:3,gar:3,fr:3,van:4,sec:6,opts:14,volt:6,angle:5,hgt:5,type:20,len:15,wid:6,dia:4,pw:12,flux:12,eff:4,cct:8,irc:6,ip:10,ik:6,ugr:4,grad:6};
+function sRel(v,t,full,zero){if(!(v>0))return 0.2;const d=Math.abs(v-t)/t;return d<=full?1:d>=zero?0:1-(d-full)/(zero-full)}
+function scoreRow(c,a){
+  let sw=0,ss=0,fcap=0;const gaps=[];
+  const add=(k,s,gap)=>{sw+=W[k];ss+=W[k]*s;if(s<0.999&&gap)gaps.push(gap)};
+  if(c.type){const NEAR=['Tubulaire','Réglette étanche','Linéaire','Réglette'];const s=a.type===c.type?1:c.typeWeak?(c.type==='Suspension'?(a.type==='Linéaire'?0.6:a.type==='Highbay'?0.5:0):a.type==='Linéaire'?0.6:a.type==='Tubulaire'?0.45:(TCOMP[c.type]||[]).includes(a.type)?0.3:0):(NEAR.includes(c.type)&&NEAR.includes(a.type))?0.85:(TCOMP[c.type]||[]).includes(a.type)?0.55:0;add('type',s,'type '+a.type)}
+  if(c.brand){add('brand',nz(a.brand)===nz(c.brand)?1:0,'marque '+a.brand)}
+  if(c.gam){const L=String(c.gam).split(/;/).map(x=>nz(x)).filter(Boolean),g=nz(a.gamme);add('gam',L.some(x=>g===x)?1:L.some(x=>g.startsWith(x+' ')||x.startsWith(g+' '))?0.6:0,'gamme '+a.gamme)}
+  if(c.len){const s=sRel(a.len,c.len,0.02,0.25);add('len',s,'longueur '+(a.len||'n.c.')+' mm')}
+  if(c.wid){const s=sRel(a.wid,c.wid,0.03,0.3);add('wid',s,'largeur '+(a.wid||'n.c.')+' mm')}
+  {const hasC=a.cuthi>0,cs=v=>hasC?(v>=a.cutlo-2&&v<=a.cuthi+2?1:sRel(v>a.cuthi?a.cuthi:a.cutlo,v,0,0.12)):0;
+   if(c.cut)add('cut',hasC?cs(c.cut):0.2,'découpe '+(hasC?a.cutt+' mm':'non renseignée'));
+   else if(c.type==='Downlight'&&a.type==='Downlight'&&!hasC)add('cut',0.4,'découpe non renseignée');
+   if(c.dia){const s=Math.max(sRel(a.dia,c.dia,0.03,0.3),c.type==='Downlight'?cs(c.dia):0);add('dia',s,'Ø '+(a.dia||'n.c.')+' mm'+(hasC?' (découpe '+a.cutt+')':''))}}
+  const inR=a.pwlo&&c.pw>=a.pwlo*0.97&&c.pw<=a.pwhi*1.03;
+  if(c.pw){const s=inR?1:sRel(a.pw,c.pw,0.03,0.3);add('pw',s,'puissance '+(a.pw||'n.c.')+' W'+(a.pwlo?' (réglable '+a.pwlo+'-'+a.pwhi+' W)':''))}
+  if(c.flux){const s=a.flux>=c.flux*0.97?((a.flux<=c.flux*1.5||inR)?1:0.8):sRel(a.flux,c.flux,0.03,0.3);add('flux',s,'flux '+(a.flux?fr(a.flux):'n.c.')+' lm')}
+  if(c.eff){const s=a.eff>=c.eff*0.95?1:sRel(a.eff,c.eff,0.05,0.3);add('eff',s,'efficacité '+(a.eff||'n.c.')+' lm/W')}
+  if(c.cct){const ks=String(a.cct||'').split(/[\/\s;,]+/).map(Number).filter(Boolean);let s=0.3;if(ks.length){const d=Math.min(...ks.map(k=>Math.abs(k-c.cct)));s=d===0?1:d<=300?0.6:d<=1000?0.3:0}add('cct',s,'CCT '+(a.cct||'n.c.')+' K')}
+  if(c.irc){const s=a.irc>0?(a.irc>=c.irc?1:0):0.5;add('irc',s,'IRC '+(a.irc||'n.c.'))}
+  if(c.ip){const s=a.ip>0?(a.ip>=c.ip?1:0):0;add('ip',s,'IP '+(a.ip||'n.c.'))}
+  if(c.ik){const s=a.ik>0?(a.ik>=c.ik?1:0):0;add('ik',s,'IK '+(a.ik?String(a.ik).padStart(2,'0'):'n.c.'))}
+  if(c.ugr){const s=a.ugr>0?(a.ugr<=c.ugr?1:0):0.4;add('ugr',s,'UGR '+(a.ugr||'n.c.'))}
+  if(c.optq&&c.optq.length){W.opts=14+12*Math.min(3,c.optq.length);const miss=a.optMiss||c.optq.map(q=>q.l);add('opts',(c.optq.length-miss.length)/c.optq.length,miss.length?miss.map(x=>'option « '+x+' » absente').join(' ; '):null)}
+  if(c.volt){const tx=a.txt||'';const s=new RegExp('\\b'+c.volt+'\\s*v').test(tx)?1:/\b\d{2,3}\s*v(dc|ac)?\b/.test(tx)?0:0.5;add('volt',s,s===0.5?'tension non précisée':'tension différente')}
+  if(c.angle){const mm=/(\d{2,3})\s*°/.exec(a.txt||'');const av=a.ang>0?a.ang:mm?+mm[1]:0;const d=Math.abs(av-c.angle);const s=av?(d<=10?1:d<=25?0.5:0):0.5;add('angle',s,av?'angle '+av+'°':'angle non précisé')}
+  if(c.fix){const F={Suspension:{suspension:1,'filins 2m (inclus)':0.8,'tiges filetées':0.6},Encastré:{'encastré':1,griffes:1,compression:1},Saillie:{plafonnier:1,'patère pour fixation plafonnier':1,vis:0.7,'vis M4 en 3 points':0.7,'vis M4 en 2 points':0.7,'posé par gravité':0.6},'Sur rail':{'fixation sur rail':1},Colliers:{colliers:1}}[c.fix]||{};const fv=a.fixv;const dl=a.type==='Dalle LED'&&c.fix==='Saillie'&&fv==='encastré';const s=dl?0.5:fv?(F[fv]!=null?F[fv]:0):0.4;add('fix',s,dl?'pose encastrée (cadre apparent en option)':'pose : '+(fv||'n.c.'))}
+  if(c.forme){const rd=c.forme==='circulaire',s=a.formev?(a.formev===c.forme?1:(rd&&/cylindr|d[ée]corati/.test(a.formev))?0.5:0):0.5;add('forme',s,'forme '+(a.formev||'n.c.'));if(s===0)fcap=1}
+  if(c.dw){const ws=c.dw.split(';').map(x=>nz(x)).filter(Boolean);const dt=dn((a.dtx||'')+' '+(a.txt||''));const miss=ws.filter(w=>!dt.includes(w)&&!(w.endsWith('s')&&dt.includes(w.slice(0,-1))));add('dw',(ws.length-miss.length)/ws.length,miss.length?'désignation sans : '+miss.join(', '):null)}
+  if(c.classe){const s=a.cl?(a.cl===c.classe?1:0):0.5;add('classe',s,'classe '+(a.cl||'n.c.'))}
+  if(c.life){const s=a.life>0?(a.life>=c.life?1:a.life>=c.life*0.8?0.5:0):0.5;add('life',s,'durée de vie '+(a.life?fr(a.life)+' h':'n.c.'))}
+  if(c.gw){const s=a.gw>0?(a.gw>=c.gw?1:0):0.5;add('gw',s,'fil incandescent '+(a.gw?a.gw+' °C':'n.c.'))}
+  if(c.sdcm){const s=a.sdcm>0?(a.sdcm<=c.sdcm?1:0):0.5;add('sdcm',s,'SDCM '+(a.sdcm||'n.c.'))}
+  if(c.gr!=null){const s=a.gr>=0?(a.gr<=c.gr?1:0):0.5;add('gr',s,'groupe photobiologique '+(a.gr>=0?a.gr:'n.c.'))}
+  if(c.gar){const s=a.gar>0?(a.gar>=c.gar?1:0):0.5;add('gar',s,'garantie '+(a.gar?a.gar+' ans':'n.c.'))}
+  for(const [k,l] of [['fr','fabrication française'],['van','anti-vandale'],['sec','secours intégré']])if(c[k]){const s=a[k]===1?1:a[k]===0?0:0.5;add(k,s,l+(a[k]===0?' : non':' n.c.'))}
+  if(c.cab){add('cab',a.cab==='Oui'?1:a.cab==='Non'?0:0.3,a.cab==='Oui'?null:'câblage traversant '+(a.cab==='Non'?'non':'n.c.'))}
+  if(c.clean){add('clean',a.clean?1:0,'pas prévu pour salle blanche')}
+  if(c.drv&&a.drv>=0){add('drv',a.drv?1:0,'driver non inclus (à commander séparément)')}
+  if(c.cmap){const r=c.cmap.get(a.code);let s,g=null;if(r){s=Math.max(0.5,(r[8]||0)/100);g='équivalent de '+String(c.conc).split(' — ')[0].split(' (')[0]+' : '+r[7]+' '+r[8]+' %'}else if(c.cgam.has(a.brand+'|'+a.gamme)){s=0.6;g='même gamme qu\'un équivalent du concurrent'}else{s=0.1;g='pas listé comme équivalent du concurrent'}add('conc',s,g)}
+  if(c.hgt){const s=sRel(a.hgt,c.hgt,0.05,0.4);add('hgt',s,'hauteur '+(a.hgt||'n.c.')+' mm')}
+  if(c.grad){const g=String(a.grad||'');const s=c.grad==='any'?(g&&g!=='Non'?1:0):(g.includes(c.grad)?1:0);add('grad',s,'gradation '+(g||'n.c.'))}
+  let sc=sw?Math.round(ss/sw*100):0;if(fcap&&sc>55)sc=55;if(gaps.length&&sc>99)sc=99;return {score:sc,gaps};
+}
+function diaOf(i){if(C.d[i])return C.d[i];const m=/(?:^|[ \/(])(?:d|ø)\s?(\d{2,3})(?=[ \/)]|$)/i.exec(C.ds[i]||'');return m?+m[1]:0}
+function pwRange(i){const m=/(\d{1,3}(?:\s*-\s*\d{1,3})+)\s*w\b/i.exec(C.dl[i]||'');if(!m)return null;const v=m[1].split('-').map(x=>+x.trim());return [Math.min(...v),Math.max(...v)]}
+function attrsOf(i){const pr=pwRange(i);const gm=D.gamme[C.gamme[i]],br=D.brand[C.brand[i]],isD=D.type[C.type[i]]==='Dalle LED';return {code:C.code[i],cab:D.cab[C.cab[i]],brand:br,gamme:gm,drv:isD?((br!=='Integratech'||/^(SCLEAN|SCLEAN S|LED panel Quadra)$/.test(gm))?1:0):-1,clean:/^(SCLEAN|SCLEAN S|OPALI)$/.test(gm)?1:0,pwlo:pr?pr[0]:0,pwhi:pr?pr[1]:0,cutlo:C.xcutlo[i],cuthi:C.xcuthi[i],cutt:D.xcutt[C.xcutt[i]],fixv:D.xfix[C.xfix[i]]||(D.type[C.type[i]]==='Dalle LED'?(D.gamme[C.gamme[i]]==='SCLEAN S'?'plafonnier':'encastré'):''),formev:D.xforme[C.xforme[i]],dtx:nz((C.dl[i]||'')+' '+(D.col[C.col[i]]||'')+' '+(D.matd[C.matd[i]]||'')+' '+(D.matc[C.matc[i]]||'')),cl:['','I','II','III'][C.xcl[i]],gw:C.xgw[i],life:C.xlife[i],ang:C.xang[i],sdcm:C.xsdcm[i],gr:C.xgr[i],gar:C.xgar[i],fr:C.xfr[i],van:C.xvan[i],sec:C.xsec[i],txt:(C.dl[i]||'')+' '+(C.ds[i]||'').toLowerCase()+(C.xopal&&C.xopal[i]?' diffuseur opale':'')+' '+(D.xvolt[C.xvolt[i]]||'').toLowerCase(),hgt:C.h[i],type:D.type[C.type[i]],len:C.l[i]||C.w[i],wid:C.l[i]?C.w[i]:0,dia:diaOf(i),pw:C.pw[i],flux:C.flux[i],eff:C.eff[i],cct:D.cct[C.cct[i]],irc:C.irc[i],ip:C.ip[i],ik:C.ik[i],ugr:C.ugr[i],grad:D.grad[C.grad[i]]}}
+function cctpTop(c0){const c=Object.assign({},c0);delete c.pwid;delete c.phgt;
+  if(c.type==='Bloc de secours'){const g=D.gamme.indexOf('Blocs de secours'),o=[];for(let i=0;i<N0;i++)if(C.gamme[i]===g)o.push({i,score:25,gaps:['unité de secours pour driver, pas un BAES/SATI certifié'],sp:null});return o}
+  const cand=[];
+  for(let i=0;i<N0;i++){const a=attrsOf(i);if(c.type&&!(a.type===c.type||(TCOMP[c.type]||[]).includes(a.type)))continue;if(c.optq)a.optMiss=realMiss(i,c.optq);const r=scoreRow(c,a);cand.push({i,score:r.score,gaps:r.gaps,sp:null})}
+  for(const sp of SPECS){const ex=sp.ex,a=attrsOf(ex);if(c.type&&!(a.type===c.type||(TCOMP[c.type]||[]).includes(a.type)))continue;
+    const vals=parseVals(sp,C.code[ex]),cur=vals.map((v,k)=>Math.max(0,sp.lists[k].indexOf(v)));let changed=false;const a2=Object.assign({},a);
+    sp.fam.forEach((f,k)=>{
+      if(f==='Température de couleur'&&c.cct){let bi=-1,bs=-1;sp.attrs[k].forEach((at,vi)=>{if(at.cct){const s=Math.abs(+at.cct-c.cct);const need=c.irc>(C.irc[ex]||0);const sc=1e6-s+(need?(at.irc>=c.irc?500:0):(at.irc?-500:0));if(sc>bs){bs=sc;bi=vi}}});if(bi>=0&&bi!==cur[k]){cur[k]=bi;changed=true}if(bi>=0){a2.cct=sp.attrs[k][cur[k]].cct;if(sp.attrs[k][cur[k]].irc)a2.irc=sp.attrs[k][cur[k]].irc}}
+      else if(f==='Alimentation'&&c.grad){const want=c.grad==='any'?null:c.grad;let bi=-1;sp.attrs[k].forEach((at,vi)=>{if(at.grad&&(want?at.grad===want:at.grad!=='Non')&&bi<0)bi=vi});if(bi>=0){if(bi!==cur[k]){cur[k]=bi;changed=true}a2.grad=sp.attrs[k][bi].grad}}
+      else if(f==='Classe électrique'&&c.classe){let bi=-1;sp.attrs[k].forEach((at,vi)=>{if(bi<0&&new RegExp('^classe '+c.classe+'$','i').test(at.lab||''))bi=vi});if(bi>=0){if(bi!==cur[k]){cur[k]=bi;changed=true}a2.cl=c.classe}}
+      else if(f==='Étanchéité'&&c.ip){let bi=-1,bv=1e9;sp.attrs[k].forEach((at,vi)=>{if(at.ip!=null&&at.ip>=c.ip&&at.ip<bv){bv=at.ip;bi=vi}});if(bi>=0){if(bi!==cur[k]){cur[k]=bi;changed=true}a2.ip=sp.attrs[k][bi].ip}}
+    });
+    const miss=[];if(c.optq)for(const q of c.optq){let f=false;sp.fam.forEach((fm,k)=>{if(f)return;sp.attrs[k].forEach((at,vi)=>{const lb=at.lab||at.alt;if(!f&&lb&&(nz(lb)===q.n||(q.n.includes(' ')&&nz(lb).startsWith(q.n+' ')))){f=true;if(cur[k]!==vi){cur[k]=vi;changed=true}if(/^traversant/.test(q.n))a2.cab='Oui'}})});if(!f)miss.push(q.l)}
+    a2.optMiss=miss;
+    if(!changed)continue;
+    let bad=false;for(let i2=0;i2<sp.L&&!bad;i2++)for(const j of sp.prev[i2])if(sp.fbn[j][i2].has(cur[j]*64+cur[i2])){bad=true;break}
+    if(bad)continue;const code=sp.p+cur.map((v,k)=>sp.lists[k][v]).join('');if(CODEIDX.has(code)||sp.exclSet.has(code))continue;
+    const r=scoreRow(c,a2);cand.push({i:-1,score:r.score,gaps:r.gaps,sp,cur:cur.slice(),code})}
+  cand.sort((x,y)=>y.score-x.score||(x.i>=0?0:1)-(y.i>=0?0:1));
+  const seen=new Set(),top=[];
+  for(const r of cand){if(top.length>=15)break;let id=r.i;const key=r.sp?'S'+r.sp.p:(()=>{const a=attrsOf(id);return [C.brand[id],C.gamme[id],a.len,a.wid,a.pw,a.flux,a.cct,a.ip,a.ik,a.grad].join('|')})();if(seen.has(key))continue;seen.add(key);top.push(r)}
+  return top}
+function pillVis(){const ty=$('#cc_type').value;for(const lb of $('#cctpPills').children){const v=lb.querySelector('select,input').value,k=lb.dataset.k,rel=REL[k];lb.classList.toggle('on',!!v);lb.style.display=(!rel||v||rel.includes(ty))?'':'none'}}
+function cctpMatch(){
+  const res=$('#cctpRes');res.textContent='';
+  const c=cctpCrit(),keys=Object.keys(c).filter(k=>CRIT.some(x=>x[0]===k));
+  pillVis();
+  if(!keys.length){return}
+  const top=cctpTop(c);
+  const crit=keys.map(k=>CRIT.find(x=>x[0]===k)[1]+' '+c[k]).join(' · ');
+  res.append(el('div',{class:'bar'},el('span',{class:'n',text:'Meilleures correspondances'}),el('span',{class:'note',text:'Critères pris en compte : '+crit})));
+  if(CCTPNOTES.length)res.append(el('p',{class:'note',text:'Attention : '+CCTPNOTES.join(' ; ')+'.'}));
+  let slot=0;
+  const tableFor=top=>{
+  const head=['Score','Marque','Référence','Désignation','Type','Long. (mm)','Découpe (mm)','IP','IK','W','lm','lm/W','CCT (K)','IRC','Gradation','Positionnement','Site / FT','Écarts avec la demande'];
+  const tb=el('tbody');
+  for(const r of top){const id=r.i>=0?r.i:materialize(r.sp,r.cur,r.code,SLOTMAX+(slot++));
+    const tr=el('tr',{tabindex:'0'},
+      el('td',null,el('span',{class:'score '+(r.score>=85?'hi':r.score<60?'lo':''),text:r.score+' %'})),
+      el('td',{class:'b-'+D.brand[C.brand[id]],text:D.brand[C.brand[id]]}),el('td',{class:'mono',text:C.code[id]}),el('td',{class:'des',text:C.ds[id]}),el('td',{text:D.type[C.type[id]]}),
+      el('td',{class:'num',text:C.l[id]||C.w[id]||''}),el('td',{class:'num',text:D.xcutt[C.xcutt[id]]||(D.type[C.type[id]]==='Downlight'?'n.c.':'')}),el('td',{text:D.ipt[C.ipt[id]]||'n.c.'}),el('td',{text:D.ikt[C.ikt[id]]||'n.c.'}),el('td',{class:'num',text:C.pw[id]||''}),el('td',{class:'num',text:C.flux[id]||''}),el('td',{class:'num',text:C.eff[id]||''}),
+      el('td',{text:D.cct[C.cct[id]]||''}),el('td',{class:'num',text:C.irc[id]||''}),el('td',{text:D.grad[C.grad[id]]||''}),el('td',{text:D.pos[C.pos[id]]||''}),(()=>{const t=siteOf(id),td=el('td');if(t){const a=el('a',{href:t.url,target:'_blank',rel:'noopener',text:/\.pdf$/.test(t.url)?'↗ FT (PDF)':'↗ site'});a.onclick=e=>e.stopPropagation();td.append(a)}else td.append(el('span',{class:'note',text:'FT : ADV / chef de marque'}));return td})(),el('td',{class:'long',text:r.gaps.length?r.gaps.join(' ; '):'Tous les critères sont satisfaits'}));
+    tr.onclick=()=>openRef(id);tr.onkeydown=e=>{if(e.key==='Enter')openRef(id)};tb.append(tr)}
+  return (el('div',{class:'tablewrap',style:'max-height:420px'},el('table',null,el('thead',null,el('tr',null,head.map(h=>el('th',{text:h})))),tb)));
+  };
+  res.append(tableFor(top));
+  if(c.pwid||c.phgt){const c2={type:'Profilé LED'};if(c.pwid)c2.wid=c.pwid;if(c.phgt)c2.hgt=c.phgt;res.append(el('div',{class:'bar'},el('span',{class:'n',text:'Profilé associé'}),el('span',{class:'note',text:'Section '+(c.pwid||'?')+' × '+(c.phgt||'?')+' mm'})));res.append(tableFor(cctpTop(c2)))}
+  {const ty=c.type,N=[];
+   if(ty==='Dalle LED'){N.push('Dalles Integratech (Bright, QT, QTU, Manga) : le driver est toujours à commander séparément (PSCC-040/042 préréglés, PSCC-040DA DALI, UNIDRIVER36/50). Exceptions : kit Quadra (panneau + cadre + driver) et SCLEAN (driver et cadre inclus).');N.push('Dalles SFEL (Opali, Opom, Evolux, Odri) : driver intégré, l\'alimentation (électronique, DALI…) se choisit dans la référence ; le catalogue ne prévoit pas de montage en saillie.');N.push('Pose : les dalles sont encastrées en faux plafond par défaut ; pour la saillie, il faut ajouter un cadre apparent (QTSF…, PLBSF…, vendu à part) ou prendre une version SCLEAN S.')}
+   if(ty==='Ruban LED'){N.push('Un ruban LED ne fonctionne jamais seul : prévoir un profilé (gamme Profilés, avec diffuseur), une alimentation 24 V ou 48 V (gamme Alimentations LED, puissance ≥ W/m × longueur, avec marge de 20 %), éventuellement un contrôleur ou variateur (Controlup, Integraconnect) et des connecteurs (Connecteur Ruban LED).')}
+   if(N.length)res.append(el('div',{class:'note',style:'margin:10px 0;padding:10px 12px;border:1px solid var(--bd,#ccc);border-radius:8px'},el('strong',{text:'À prévoir avec ce produit'}),N.map(x=>el('p',{style:'margin:6px 0 0',text:x}))))}
+  res.append(el('p',{class:'note',text:'Les références construites à partir des options (température, gradation, IP) n\'existent pas forcément en stock : à confirmer avec SFEL. Les lignes d\'écart indiquent ce qui diffère de la demande.'}));
+}
+/* ---------- recherche par concurrent ---------- */
+let CONC=null;
+async function initConc(){
+  if(CONC)return;
+  $('#cmsg').textContent='Chargement de la base concurrence…';
+  try{CONC=await getJSON('data/conc.json')}catch(e){$('#cmsg').textContent='Base concurrence indisponible ('+e.message+')';return}
+  const X=CONC,ci=n=>X.bc.indexOf(n),ei=n=>X.ec.indexOf(n);
+  CONC.ix={id:ci('ID concurrent'),br:ci('Marque'),ga:ci('Gamme'),ref:ci('Référence fabricant'),des:ci('Désignation'),rex:ci('Réf. Rexel'),son:ci('Réf. Sonepar'),ean:ci('Code EAN'),lab:ci('Libellé liste')};
+  CONC.byId=new Map(X.b.map((r,k)=>[r[CONC.ix.id],k]));
+  CONC.eq=new Map();for(const r of X.e){const id=r[0];if(!CONC.eq.has(id))CONC.eq.set(id,[]);CONC.eq.get(id).push(r)}
+  for(const l of CONC.eq.values())l.sort((a,b)=>a[1]-b[1]);
+  const brands=[...new Set(X.b.map(r=>r[CONC.ix.br]))].sort((a,b)=>String(a).localeCompare(b,'fr'));
+  const cb=$('#cb');cb.append(el('option',{value:'',text:'(toutes)'}));brands.forEach(b=>cb.append(el('option',{value:b,text:b})));
+  const gb=$('#cg2');gb.append(el('option',{value:'',text:'(toutes)'}));['Integratech','Lébénoïd','SFEL'].forEach(b=>gb.append(el('option',{value:b,text:b})));
+  const refill=()=>{const b=cb.value,q=$('#cq').value.toLowerCase().trim(),cp=$('#cp'),cur=cp.value;cp.textContent='';cp.append(el('option',{value:'',text:'(choisir)'}));
+    const L=X.b.filter(r=>(!b||r[CONC.ix.br]===b)&&(!q||String(r[CONC.ix.lab]).toLowerCase().includes(q))).sort((a,c)=>String(a[CONC.ix.lab]).localeCompare(c[CONC.ix.lab],'fr'));
+    L.slice(0,1500).forEach(r=>cp.append(el('option',{value:r[CONC.ix.id],text:r[CONC.ix.lab]})));if([...cp.options].some(o=>o.value===cur))cp.value=cur};
+  cb.onchange=()=>{refill();showConc()};$('#cq').oninput=refill;$('#cp').onchange=()=>{$('#cr').value='';showConc()};
+  $('#cr').oninput=()=>{showConc()};$('#cg2').onchange=showConc;
+  refill();showConc();
+}
+function showConc(){
+  const X=CONC,ix=X.ix,out=$('#cout'),msg=$('#cmsg');out.textContent='';msg.textContent='';
+  let id=null;const ref=$('#cr').value.trim().toLowerCase();
+  if(ref){const r=X.b.find(r=>[ix.ref,ix.rex,ix.son,ix.ean].some(k=>String(r[k]).toLowerCase()===ref));
+    if(!r){msg.textContent='Référence introuvable dans la base concurrence : vérifiez la saisie (référence fabricant, Rexel, Sonepar ou EAN).';return}id=r[ix.id]}
+  else id=$('#cp').value||null;
+  if(!id){msg.textContent='Choisissez un produit concurrent ou saisissez une référence.';return}
+  const row=X.b[X.byId.get(id)],pick=(n)=>row[X.bc.indexOf(n)];
+  const kv=[['Marque',pick('Marque')],['Gamme',pick('Gamme')],['Référence',pick('Référence fabricant')],['Désignation',pick('Désignation')],['Réf. Rexel',pick('Réf. Rexel')],['Réf. Sonepar',pick('Réf. Sonepar')],['EAN',pick('Code EAN')],['Type',pick('Type de luminaire')],['Flux (lm)',pick('Flux utile (lumen)')],['Puissance (W)',pick('Puissance luminaire')],['Efficacité (lm/W)',pick('Efficacité lumineuse (lm/W)')],['CCT (K)',pick('Température de couleur (Kelvin)')],['IRC',pick('IRC (Ra)')],['IP / IK',[pick('IP'),pick('IK')].filter(Boolean).join(' / ')],['Dimensions',pick('Dimensions (affichage)')],['Gradation',pick('Dimmable')],['Détection',pick('Type de déclenchement')],['Secours',pick('Secours (batterie)')],['Couleur',pick('Couleur')],['Statut de la donnée',pick('Statut de la donnée')]].filter(x=>x[1]!==''&&x[1]!=null);
+  out.append(el('section',{class:'panel',style:'margin-bottom:12px'},el('h2',{text:'Produit concurrent sélectionné'}),el('dl',{class:'kv'},kv.map(([k,v])=>[el('dt',{text:k}),el('dd',{text:String(v)})]))));
+  const gb=$('#cg2').value;let rows=(X.eq.get(id)||[]).filter(r=>!gb||r[2]===gb);
+  out.append(el('div',{class:'bar'},el('span',{class:'n',text:rows.length?fr(rows.length)+(rows.length>1?' réponses du groupe':' réponse du groupe'):'Aucune réponse du groupe pour ce produit'+(gb?' avec cette marque':'')})));
+  if(!rows.length)return;
+  const hd=X.ec.filter((c,k)=>k!==0);const tw=el('div',{class:'tablewrap'});
+  const tb=el('table',null,el('thead',null,el('tr',null,hd.map(c=>el('th',{text:c})))),el('tbody',null,rows.map(r=>{
+    const tr=el('tr');r.forEach((v,k)=>{if(k===0)return;const td=el('td',{text:v==null?'':String(v)});const c=X.ec[k];
+      if(c==='Marque groupe')td.className='b-'+v;else if(c==='Réf. groupe')td.className='mono';else if(c==='Niveau')td.className='lvl lvl-'+v;else if(c==='Désignation groupe')td.className='des';else if(c.startsWith('Écarts'))td.className='long';
+      else if(typeof v==='number')td.className='num';tr.append(td)});
+    const j=CODEIDX.get(r[X.ec.indexOf('Réf. groupe')]);if(j!=null){tr.onclick=()=>openRef(j)}return tr})));
+  tw.append(tb);out.append(tw);
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+  for(const t of ['cctp','search','conc','cfg','opts'])$('#tab-'+t).classList.toggle('hidden',b.dataset.tab!==t);if(b.dataset.tab==='conc')initConc()}));
+boot();
+})();
+</script>
