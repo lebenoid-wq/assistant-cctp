@@ -631,6 +631,62 @@ function linkBlock(l,title){
     if(l[4]){box.append(el('div',{class:'grp',text:l[0]==='V'?'Autres variantes possibles':'Autres prescriptions possibles'}),refChips(parseLinks(l[4])))}}
   return box;
 }
+
+/* ---------- compatibilités (drivers des panneaux, profilés / alimentations / contrôleurs / connecteurs des rubans) ---------- */
+let CMP=null;
+const chipOf=(ref,info)=>({ref,info});
+function byGamme(g,test){const out=[];for(let j=0;j<N0;j++)if(D.gamme[C.gamme[j]]===g&&D.brand[C.brand[j]]==='Integratech'&&test(C.code[j],(C.ds[j]||''),j))out.push(j);return out}
+function rubFam(i){const g=D.gamme[C.gamme[i]],cd=C.code[i],ds=C.ds[i]||'';const adv=/^LS-ADV/.test(cd);
+  const M={'Monocolor White':adv?'ADV':'PER','Monocolor Dotfree SMD':'DF','Monocolor Dotfree COB':'COB','Monocolor Dotfree Silicon':'SIL','Monocolor Dotfree CSP Pro':'CSP','Special Forte Puissance':'HP','Special Haute Température':'HT','Special CRI95':'CR95','Grande Longueur 12m 24V':'GL12','Grande Longueur 20m 48V':'GL20','Grande Longueur 50m 48V':'GL50','Digital':'DIGITAL','Monocolor TW':'TW','Multicolor RGB SMD':'RGB','RGBW':'RGBW','RGBTW':'RGBTW'};
+  if(g==='Monocolor RGB')return /BL$|BLUE/i.test(cd+ds)?'BLUE':/GR$|VERT|GREEN/i.test(cd+ds)?'GREEN':'RED';
+  return M[g]||null}
+function rubKind(i){const g=D.gamme[C.gamme[i]];return /^Monocolor (RGB|TW)$/.test(g)?(g==='Monocolor TW'?'TW':'MONO'):g==='Multicolor RGB SMD'?'RGB':g==='RGBW'?'RGBW':g==='RGBTW'?'RGBTW':g==='Digital'?'DIGITAL':'MONO'}
+async function compatBlock(i){
+  if(D.brand[C.brand[i]]!=='Integratech'||i>=N0)return null;
+  const g=D.gamme[C.gamme[i]],ty=D.type[C.type[i]];
+  try{if(!CMP)CMP=await getJSON('data/compat.json')}catch(e){return null}
+  const box=el('section',{class:'panel',style:'margin:12px 0'},el('h2',{text:'À prévoir avec ce produit'}));
+  const grp=(t,chips,note)=>{box.append(el('div',{class:'grp',style:'margin-top:10px',text:t}));if(note)box.append(el('div',{class:'note',text:note}));if(chips&&chips.length)box.append(refChips(chips))};
+  const refsBy=(g2,test,info)=>byGamme(g2,test).map(j=>chipOf(C.code[j],info?info(j):''));
+  if(CMP.pd[g]||g==='LED panel Quadra'||g==='SCLEAN'||g==='SCLEAN S'){
+    if(g==='LED panel Quadra'){box.append(el('p',{class:'note',text:'Kit complet : panneau, cadre et driver sont fournis ensemble (catalogue p. 28). Rien à commander en plus.'}));return box}
+    if(g==='SCLEAN'||g==='SCLEAN S'){box.append(el('p',{class:'note',text:'Livré avec driver et cadre (set complet). La version SCLEAN S se pose en saillie.'}));return box}
+    const d=CMP.pd[g];
+    const dr=d.ref.map(r=>{const j=CODEIDX.get(r);return chipOf(r,j!=null?String(C.ds[j]||'').replace(/^.*?(PSCC|UNIDRIVER)/,'$1').slice(0,70):'')});
+    grp('Drivers compatibles (à commander séparément pour chaque panneau)',dr,'Catalogue Integratech 2026, panneau '+d.cat+(d.warn?' — '+d.warn:'')+'. Les PSCC-042…-AA ont un rendement de 93 %, les PSCC-040…-0A de 89 % ; le courant de sortie se règle par dipswitch (préréglé pour la gamme). PSCC-040DA : DALI / Push-Dim / Corridor ; UNIDRIVER : TRIAC / 1-10 V / DALI2 / Push-Dim. La fonction Push-Dim ne convient qu\'à un seul panneau, sauf amplificateur SR-1009-1-10-PWM.');
+    const big=(C.w[i]>=250&&C.l[i]>=1000)||/30120/.test(C.code[i]);const sz=big?'30120':'6060';
+    const fr_=refsBy('LED panel Acc',(cd,ds)=>/cadre/i.test(ds)&&cd.includes(sz));
+    if(fr_.length)grp('Cadres pour la pose en saillie ou en cloison creuse',fr_.slice(0,10),'Une dalle est encastrée en faux plafond par défaut ; pour la saillie, ajouter un cadre apparent (QTSF…).');
+    return box}
+  if(ty==='Ruban LED'){
+    const ds=C.ds[i]||'',vm=/(\d+)\s*v(?:dc)?\b/i.exec(ds),volt=vm?+vm[1]:24,pw=C.pw[i]||0,lr=/(\d+)\s*m\b/i.exec(ds),L=lr?+lr[1]:5,tot=pw*L,need=Math.ceil(tot*1.2),wd=C.w[i]||0,ip=C.ip[i]||20;
+    box.append(el('p',{class:'note',text:'Ruban '+volt+' V · '+(wd?'largeur '+wd+' mm · ':'')+(pw?pw+' W/m · '+L+' m = '+(Math.round(tot*10)/10)+' W':'')+'. Un ruban ne fonctionne jamais seul : profilé + alimentation + éventuellement contrôleur et connecteurs.'}));
+    /* profilés */
+    const fam=rubFam(i),lm=(/(\d{3,4})\s*lm\/m/i.exec(ds)||[])[1];
+    let rows=CMP.rub.filter(r=>r.f===fam&&(!lm||r.lm==null||r.lm==+lm)&&r.ip===(ip>=60?67:20));
+    if(!rows.length)rows=CMP.rub.filter(r=>r.f===fam&&r.ip===(ip>=60?67:20));
+    let names=null,why='';
+    if(rows.length){rows.sort((a,b)=>(Math.abs(a.wm-pw)*3+Math.abs(a.w-wd))-(Math.abs(b.wm-pw)*3+Math.abs(b.w-wd)));names=rows[0].ok;why='tableau de compatibilité du catalogue (p. 148-153), ligne « '+rows[0].l+' »'}
+    else{names=Object.keys(CMP.prof).filter(n=>CMP.prof[n][0]>=wd+2&&CMP.prof[n][1]>=pw);why='calcul : largeur intérieure ≥ largeur du ruban + 2 mm et capacité de refroidissement ≥ W/m du ruban (règles du catalogue p. 129)'}
+    box.append(el('div',{class:'grp',style:'margin-top:10px',text:'Profilés compatibles'}));
+    if(!names.length)box.append(el('p',{class:'note',text:'Aucun profilé du catalogue ne convient d\'après les règles (largeur ou puissance au mètre trop élevées). À vérifier avec le catalogue p. 148.'}));
+    else{box.append(el('div',{class:'note',text:'Source : '+why+'. Diffuseur inclus dans le tube ; pertes de lumière : transparent −3 %, mat −25 %, opale −30 %, noir −60 %.'}));
+      for(const n of names){const rf=byGamme('Profilés',(cd)=>cd.startsWith(n)&&!/^LC/.test(cd)).map(j=>chipOf(C.code[j],'')).slice(0,8);const pr=CMP.prof[n];const row=el('div',{style:'margin:6px 0'},el('b',{text:n}),el('span',{class:'note',text:' · larg. int. '+pr[0]+' mm · max '+pr[1]+' W/m'}));if(rf.length)row.append(refChips(rf));box.append(row)}}
+    /* alimentation */
+    const al=[];for(const j of byGamme('Alimentations LED',()=>true)){const cd=C.code[j],t=String(C.ds[j]||''),vv=/(\d+)\s*v/i.exec(t),pj=C.pw[j];if(/^ICL/.test(cd)||!vv||+vv[1]!==volt||!pj||pj<need)continue;al.push({j,p:pj,ip:C.ip[j]||0,cd,t})}
+    al.sort((a,b)=>a.p-b.p);
+    const pick=[...al.filter(x=>x.ip<60).slice(0,3),...al.filter(x=>x.ip>=60).slice(0,3)];
+    grp('Alimentation '+volt+' V (≥ '+need+' W : '+(Math.round(tot*10)/10)+' W + 20 % de marge)',pick.map(x=>chipOf(x.cd,x.p+' W · IP'+x.ip+(/DIN/i.test(x.t)?' · rail DIN':'')+(/1-10V/.test(x.t)?' · variable 1-10 V':''))),pick.length?'Au-delà de la puissance d\'une alimentation, partager le ruban en plusieurs tronçons alimentés séparément ; pour de longues distances, le 48 V réduit les pertes.':'Aucune alimentation du catalogue ne couvre cette puissance : répartir sur plusieurs alimentations.');
+    /* contrôleurs */
+    const kd=rubKind(i),RX={MONO:/mono/i,TW:/bi-?color|cct|\btw\b|tunable/i,RGB:/RGB/,RGBW:/RGB\(W\)|RGB\+W|RGBW/,RGBTW:/RGB\(W\)|RGBW|DT8|tunable/i,DIGITAL:/digital|dmx/i}[kd];
+    const ct=[...byGamme('Controlup',(cd,t)=>RX.test(t)),...byGamme('Integraconnect',(cd,t)=>RX.test(t)&&!/PIR|push|xpress/i.test(t))].slice(0,10).map(j=>chipOf(C.code[j],String(C.ds[j]||'').slice(0,60)));
+    grp('Contrôleurs / variateurs possibles ('+({MONO:'monocolor',TW:'bi-color (blanc variable)',RGB:'RGB',RGBW:'RGB(W)',RGBTW:'RGB + blanc variable',DIGITAL:'digital / DMX'}[kd])+')',ct,'Facultatif : sans contrôleur, le ruban reste allumé en continu (ON/OFF au niveau de l\'alimentation).');
+    /* connecteurs */
+    const ck={MONO:/mono/i,TW:/bicolor/i,RGB:/RGB(?!\+W)/,RGBW:/RGB\+W(?!\+)/,RGBTW:/RGB\+W\+WW/}[kd];
+    const cn=ck&&wd?byGamme('Connecteur Ruban LED',(cd,t)=>t.includes(wd+'mm')&&ck.test(t)).map(j=>chipOf(C.code[j],String(C.ds[j]||'').replace(/ruban led /i,'').slice(0,55))):[];
+    grp('Connecteurs et coupleurs ('+(wd?wd+' mm':'largeur n.c.')+')',cn.slice(0,12),cn.length?'':'Aucun connecteur du catalogue ne correspond exactement à cette largeur ou à ce type de ruban.');
+    return box}
+  return null}
 async function openRef(i){
   const dr=$('#drawer'),body=$('#dbody');dr.classList.remove('hidden');body.textContent='Chargement…';
   const close=()=>dr.classList.add('hidden');dr.onclick=e=>{if(e.target===dr)close()};document.onkeydown=e=>{if(e.key==='Escape')close()};
@@ -645,6 +701,7 @@ async function openRef(i){
   body.append(siteBox(i));
   const l=linkOf(i);if(l)body.append(linkBlock(l));
   if(i<N0&&b==='SFEL'&&specFor(D.gamme[C.gamme[i]],C.code[i]))body.append(el('button',{class:'btn pri',style:'margin-bottom:12px',onclick:()=>{close();cfgFromRef(i)},text:'Modifier les options de cette référence'}));
+  try{const cb=await compatBlock(i);if(cb)body.append(cb)}catch(e){}
   body.append(el('section',{class:'panel',style:'margin:12px 0'},el('h2',{text:i>=N0?'Fiche de la référence existante la plus proche':'Fiche complète'}),el('dl',{class:'kv'},Object.keys(o).filter(k=>!HIDE.has(k)).map(k=>[el('dt',{text:k}),el('dd',{text:o[k]})]))));
 }
 /* ---------- constructeur de référence (piloté par les modèles du catalogue) ---------- */
@@ -742,7 +799,7 @@ function detectOpts(raw){const V=buildVoc(),tx=nz(raw).split(' ').filter(Boolean
   for(const v of V){let ok=true;for(const w of v.tk){if(!tx.some(x=>x===w||lev1(x,w))){ok=false;break}}if(ok)hit.push(v)}
   const keep=hit.filter(a=>!hit.some(b=>b!==a&&b.tk.length>a.tk.length&&a.tk.every(w=>b.tk.some(y=>y===w||lev1(y,w)))));
   const seen=new Set(),out=[];for(const v of keep){const key=v.tk.map(w=>w.replace(/(?:es|s|e)$/,'')).join(' ');if(seen.has(key))continue;seen.add(key);out.push(v.lab)}
-  return out.slice(0,8)}
+  return out.filter(l=>!(/lentille/i.test(l)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw))).slice(0,8)}
 const dn=x=>nz(x).replace(/\b(couvercle|vasque|cache|globe|couverture)\b/g,'diffuseur');
 function realMiss(i,optq){const pr=picksReal(i),tx=dn((C.dl[i]||'')+' '+(C.ds[i]||'')+(C.xopal&&C.xopal[i]?' diffuseur opale':''));const sm=x=>x.replace(/semi[ -]?opale/g,'semiopale');const tx2=sm(tx);return optq.filter(q=>{const qn=dn(q.n);if(/^traversant|^cablage traversant/.test(qn)&&D.cab[C.cab[i]]==='Oui')return false;{const T2=' '+tx2+' ';if(T2.includes(' '+qn+' ')||qn.split(' ').every(w=>T2.includes(' '+w+' ')))return false}if(pr)for(let k=0;k<pr.sp.fam.length;k++){const vi=pr.sp.lists[k].indexOf(pr.vals[k]);if(vi>=0&&nz(pr.sp.attrs[k][vi].lab)===q.n)return false}return true}).map(q=>q.l)}
 const TYPEKW=[[/ruban|bandeau|\bstrip\b|guirlande|n[ée]on flex|\bw\s*\/\s*m\b|lm\s*\/\s*m\b/,'Ruban LED'],[/profil[ée]?s?\b|goulotte alu/,'Profilé LED'],[/pav[ée]|dalle|panneau|panel\b|plaque led|platine led|encastr[ée] (?:type )?\d{2,3}\s?[x×]\s?\d{2,3}/,'Dalle LED'],[/tubulaire|\btubes?\b|\bt8\b|n[ée]on\b/,'Tubulaire'],[/r[ée]glette (?:[ée]tanche|stagna)|[ée]tanche.*r[ée]glette/,'Réglette étanche'],[/r[ée]glette/,'Réglette'],[/downlight|downray|spot encastr|\bspots?\b|encastr[ée] (?:type )?(?:rond|ø)/,'Downlight'],[/hublot|tortue/,'Hublot'],[/applique/,'Applique'],[/highbay|high bay|cloche|gamelle|industriel/,'Highbay'],[/projecteur sur rail|spot sur rail|\brail\b.*(?:spot|projecteur)/,'Projecteur sur rail'],[/rail triphas/,'Rail triphasé'],[/projecteur|floodlight|\bflood\b/,'Projecteur'],[/lustre|\bpendant\b|suspension d[ée]co/,'Suspension'],[/plafonnier/,'Plafonnier'],[/lin[ée]aire/,'Linéaire'],[/[ée]clairage public|lanterne|candélabre|\bm[âa]t\b/,'Éclairage public'],[/alimentation|\bdriver\b|transformateur/,'Alimentation LED']];
@@ -777,6 +834,9 @@ function parseCCTP(raw){
   if(!o.type&&/suspendu|suspension|pendulaire/.test(t)&&!/ruban|bandeau|profil/.test(t)&&!/[ée]tanch|stagn/.test(t)){o.type='Suspension';o.typeWeak=1}
   if(!o.type&&/[ée]tanch|stagn/.test(t)&&!/(?:profil|ruban|bandeau|alimentation|driver)/.test(t)){o.type='Réglette étanche';o.typeWeak=1}
   let m;
+  {const loose=/asym|lentille/.test(t),ma=(loose?/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°?/:/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°/).exec(t)||/\bas\s?(\d{2,3})\s?[x×]?\s?(\d{2,3})\b/.exec(t);if(ma){o.asy='AS'+ma[1]+ma[2];t=t.replace(ma[0],' ')}
+    else if(/lentilles?\s+asym[ée]triques?|asym[ée]trique/.test(t)&&/projecteur|brightmaster|\bbm\d|sport|terrain/.test(t))o.asy='AS';
+    const mb=/\b(bm[234])\b/i.exec(raw);if(mb){o.cp=mb[1].toUpperCase();t=t.replace(new RegExp('\\b'+mb[1]+'\\b','i'),' ')}}
   m=/(\d+(?:[.,]\d+)?)\s*w\s*\/\s*m\b/.exec(t);if(m){o.pw=toNum(m[1]);o.permeter=1;t=t.replace(m[0],' ')}
   m=new RegExp(NUMRE+'(?:[.,]\\d+)?\\s*lm\\s*\\/\\s*m\\b').exec(t);if(m){o.flux=toNum(m[1]);o.permeter=1;t=t.replace(m[0],' ')}
   m=/\b(12|24|48|230|220)\s*v(?:\s?(?:dc|cc|ac))?\b/.exec(t);if(m){o.volt=+m[1];t=t.replace(m[0],' ')}
@@ -801,16 +861,23 @@ function parseCCTP(raw){
   else if(/collier/.test(t))o.fix='Colliers';
   if(/circulaire|\brond[e]?\b/.test(t)&&!/projecteur/.test(t))o.forme='circulaire';else if(/carr[ée]e?\b/.test(t))o.forme='carrée';
   {const tt=t.replace(/blanc (?:neutre|chaud|froid)/g,' ');const DW=['noir','blanc','gris','argent','alu','aluminium','inox','polycarbonate','pmma','verre','opale','prismatique','microprismatique','clair','transparent','satine','chrome','laiton','bois','anodise','lentille','symetrique','asymetrique','extensive'];
-    const tn=' '+tt.normalize('NFD').replace(/[\u0300-\u036f]/g,'')+' ';const hits=DW.filter(w=>new RegExp('\\b'+w+'s?\\b').test(tn));const ral=[...tn.matchAll(/ral\s?(\d{4})/g)].map(x=>'RAL'+x[1]);if(hits.length||ral.length)o.dw=hits.concat(ral).join(' ; ')}
+    const tn=' '+tt.normalize('NFD').replace(/[\u0300-\u036f]/g,'')+' ';const hits=DW.filter(w=>!(w==='asymetrique'&&o.asy)).filter(w=>w!=='lentille'||!(/lentilles?\s*(?:de\s*)?\d|\d\s*°|asym/.test(tn)||/projecteur|brightmaster|sport/.test(tn))).filter(w=>new RegExp('\\b'+w+'s?\\b').test(tn));const ral=[...tn.matchAll(/ral\s?(\d{4})/g)].map(x=>'RAL'+x[1]);if(hits.length||ral.length)o.dw=hits.concat(ral).join(' ; ')}
   if(/traversant|c[âa]blage (?:en )?ligne|mise en ligne|repiquage/.test(t))o.cab='Oui';
   if(/\bclean\b|salles? blanches?|salles? propres?|clean ?room/.test(t))o.clean='Oui';
   if(/y compris (?:le )?driver|driver (?:inclus|compris|int[ée]gr[ée])|avec driver|incl\.? driver|driver incl/.test(t)&&!/sans driver/.test(t))o.drv='Oui';
   {const nt=' '+nz(raw)+' ';const B=[];if(/ sfel /.test(nt))B.push('SFEL');if(/ (?:integratech|itgt|integra ?tech|integra tech) /.test(nt))B.push('Integratech');if(/ (?:lebenoid|lbnd) /.test(nt))B.push('Lébénoïd');if(B.length===1)o.brand=B[0];
-    if(!window.__GN){const STOP=new Set(['option','basic','compact','soft','deep','cube','digital','downlight','special','protect','profiles','disc','urban','horizon','tops','lips','eo','filament','factory','dune','mars','cory','sola','squad','arche','atoll','mona','rgbw','alimentations led','lanternes','tracklights','special forte puissance']);window.__GN=[...new Set(D.gamme.filter(Boolean))].map(g=>({g,n:nz(g),st:STOP.has(nz(g))})).filter(x=>x.n.length>=3||x.n==='ln');{const f=new Map();for(const x of window.__GN){const w=x.n.split(' ')[0];if(x.n.includes(' ')&&w.length>=5&&!STOP.has(w)&&!D.type.some(t=>t&&nz(t).split(' ')[0]===w)&&!/^(led|monocolor|multicolor|special|grande|rail|tracklight|blocs|alimentations|connecteur|slim|integra)/.test(w)){if(!f.has(w))f.set(w,[]);f.get(w).push(x)}}const ex=[];for(const [w,L] of f)if(!window.__GN.some(x=>x.n===w))ex.push({g:L[0].g,n:w,st:false,al:L.map(x=>x.g)});window.__GN=window.__GN.concat(ex)}window.__GN.sort((a,b)=>b.n.length-a.n.length)}
+    if(!window.__GN){const STOP=new Set(['option','basic','compact','soft','deep','cube','digital','downlight','special','protect','profiles','disc','urban','horizon','tops','lips','eo','filament','factory','dune','mars','cory','sola','squad','arche','atoll','mona','rgbw','alimentations led','lanternes','tracklights','special forte puissance']);window.__GN=[...new Set(D.gamme.filter(Boolean))].map(g=>({g,n:nz(g),st:STOP.has(nz(g))})).filter(x=>x.n.length>=3||x.n==='ln');window.__GN=window.__GN.concat(window.__GN.filter(x=>/^led panel .{2,}/.test(x.n)).map(x=>({g:x.g,n:x.n.slice(10),st:false})));{const f=new Map();for(const x of window.__GN){const w=x.n.split(' ')[0];if(x.n.includes(' ')&&w.length>=5&&!STOP.has(w)&&!D.type.some(t=>t&&nz(t).split(' ')[0]===w)&&!/^(led|monocolor|multicolor|special|grande|rail|tracklight|blocs|alimentations|connecteur|slim|integra)/.test(w)){if(!f.has(w))f.set(w,[]);f.get(w).push(x)}}const ex=[];for(const [w,L] of f)if(!window.__GN.some(x=>x.n===w))ex.push({g:L[0].g,n:w,st:false,al:L.map(x=>x.g)});window.__GN=window.__GN.concat(ex)}window.__GN.sort((a,b)=>b.n.length-a.n.length)}
     const G=[];let tt=nt;for(const x of window.__GN){const re=' '+x.n+' ';if(tt.includes(re)){if(x.n==='ln'&&!/\bLN\b/.test(raw))continue;if(x.st&&!(new RegExp('\\b'+x.g.replace(/[^A-Za-z0-9 ]/g,'')+'\\b').test(raw)&&x.g===x.g.toUpperCase()&&x.g.length>=4)&&!(tt.includes(' gamme '+x.n+' ')||tt.includes(' '+x.n+' sfel ')||tt.includes(' sfel '+x.n+' ')||tt.includes(' integratech '+x.n+' ')))continue;G.push(...(x.al||[x.g]));tt=tt.split(re).join(' ')}}
     if(G.length)o.gam=G.join(' ; ')}
+  {const G=o.gam?o.gam.split(' ; '):[];const add=g=>{if(!G.includes(g))G.push(g)};
+    if(o.type==='Ruban LED'||/ruban|bandeau|\bls-/.test(t)){
+      if(/haute temp[ée]rature|\bht\b|-\s?40\s*(?:~|à|a|-)\s*\+?\s?100\s*°?\s?c/.test(t)){add('Special Haute Température');o.ht=1}
+      if(/\bcob\b/.test(t))add('Monocolor Dotfree COB');if(/silicone?\b|\bsil\b/.test(t))add('Monocolor Dotfree Silicon');if(/\bcsp\b/.test(t))add('Monocolor Dotfree CSP Pro');
+      if(/dotfree|sans points?|sans pixel/.test(t)&&!G.some(g=>/Dotfree/.test(g)))add('Monocolor Dotfree');
+      if(/forte puissance|haute puissance/.test(t))add('Special Forte Puissance');}
+    if(G.length)o.gam=G.join(' ; ')}
   {const cd=detectConc(raw);if(cd)o.conc=cd}
-  {const sp_=detectSpe(raw);if(sp_.length)o.spe=sp_.join(' ; ')}
+  {const sp_=detectSpe(raw).filter(x=>!(/lentille/i.test(x)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw)));if(sp_.length)o.spe=sp_.join(' ; ')}
   if(/fabriqu[ée]e? en france|made in france|origine france/.test(t))o.fr='Oui';
   if(/[ée]clairage de secours int[ée]gr|avec secours|kit de secours|bloc de secours int[ée]gr/.test(t))o.sec='Oui';
   m=/\bqt[ée]\s*[=:]?\s*(\d+)/.exec(t);if(m)o.qty=+m[1];
@@ -848,7 +915,7 @@ function parseCCTP(raw){
   return {o,notes};
 }
 const REL={cab:['Réglette étanche','Tubulaire','Linéaire','Réglette'],drv:['Dalle LED'],clean:[],cut:['Downlight'],forme:[],hgt:[],volt:['Ruban LED','Alimentation LED'],angle:['Ruban LED','Projecteur','Downlight','Highbay','Éclairage public','Projecteur sur rail'],pwid:['Ruban LED'],phgt:['Ruban LED'],gw:[],sdcm:[],gr:[],gar:[],fr:[],van:[],sec:[]};
-const CRIT=[['type','Type','sel'],['len','Longueur (mm)','n'],['wid','Largeur (mm)','n'],['dia','Diamètre (mm)','n'],['hgt','Hauteur (mm)','n'],['cut','Diamètre de découpe (mm)','n'],['pw','Puissance (W)','n'],['flux','Flux (lm)','n'],['eff','Efficacité (lm/W)','n'],['cct','Temp. couleur (K)','n'],['irc','IRC min.','n'],['ip','IP min.','n'],['ik','IK min.','n'],['ugr','UGR max.','n'],['volt','Tension (V)','n'],['angle','Angle (°)','n'],['classe','Classe électrique','selc'],['fix','Pose / fixation','selx'],['forme','Forme','self'],['dw','Mots de la désignation (couleur, diffuseur, matière…)','t'],['life','Durée de vie L80 min. (h)','n'],['gw','Fil incandescent min. (°C)','n'],['sdcm','SDCM max.','n'],['gr','Risque photobiologique : groupe max.','n'],['gar','Garantie min. (ans)','n'],['fr','Fabriqué en France','selb'],['van','Anti-vandale','selb'],['sec','Secours intégré','selb'],['pwid','Profilé associé : largeur (mm)','n'],['phgt','Profilé associé : hauteur (mm)','n'],['opts','Options demandées (séparées par ;)','t'],['grad','Gradation','selg'],['conc','Concurrent ciblé (efface pour ignorer)','t'],['clean','Salle blanche','selb'],['cab','Câblage traversant','selb'],['drv','Driver inclus','selb'],['brand','Marque (SFEL, Integratech, Lébénoïd)','t'],['gam','Nom de produit / gamme','t'],['spe','Options spécifiques demandées (séparées par ;)','t']];
+const CRIT=[['type','Type','sel'],['len','Longueur (mm)','n'],['wid','Largeur (mm)','n'],['dia','Diamètre (mm)','n'],['hgt','Hauteur (mm)','n'],['cut','Diamètre de découpe (mm)','n'],['pw','Puissance (W)','n'],['flux','Flux (lm)','n'],['eff','Efficacité (lm/W)','n'],['cct','Temp. couleur (K)','n'],['irc','IRC min.','n'],['ip','IP min.','n'],['ik','IK min.','n'],['ugr','UGR max.','n'],['volt','Tension (V)','n'],['angle','Angle (°)','n'],['classe','Classe électrique','selc'],['fix','Pose / fixation','selx'],['forme','Forme','self'],['dw','Mots de la désignation (couleur, diffuseur, matière…)','t'],['life','Durée de vie L80 min. (h)','n'],['gw','Fil incandescent min. (°C)','n'],['sdcm','SDCM max.','n'],['gr','Risque photobiologique : groupe max.','n'],['gar','Garantie min. (ans)','n'],['fr','Fabriqué en France','selb'],['van','Anti-vandale','selb'],['sec','Secours intégré','selb'],['pwid','Profilé associé : largeur (mm)','n'],['phgt','Profilé associé : hauteur (mm)','n'],['opts','Options demandées (séparées par ;)','t'],['grad','Gradation','selg'],['conc','Concurrent ciblé (efface pour ignorer)','t'],['clean','Salle blanche','selb'],['cab','Câblage traversant','selb'],['drv','Driver inclus','selb'],['brand','Marque (SFEL, Integratech, Lébénoïd)','t'],['gam','Nom de produit / gamme','t'],['spe','Options spécifiques demandées (séparées par ;)','t'],['asy','Lentille asymétrique (ex. AS13040)','t'],['cp','Préfixe de référence (ex. BM3)','t']];
 function buildCctp(){
   const box=$('#cctpPills');
   for(const [k,l,kind] of CRIT){
@@ -884,13 +951,15 @@ let CCTPNOTES=[];
 setTimeout(()=>{try{pillVis()}catch(e){}},0);
 let CCTPWEAK=null;
 function cctpCrit(){const o={};for(const [k,,kind] of CRIT){const v=$('#cc_'+k).value.trim();if(v==='')continue;o[k]=kind==='n'?toNum(v):v}if(o.spe){o.speq=o.spe.split(/;/).map(x=>x.trim()).filter(Boolean).map(x=>({l:x,n:nz(x)}))}if(o.opts){o.optq=o.opts.split(/;/).map(x=>x.trim()).filter(Boolean).map(x=>({l:x,n:nz(x)}))}for(const k in o)if(typeof o[k]==='number'&&isNaN(o[k]))delete o[k];if(o.type&&o.type===CCTPWEAK)o.typeWeak=1;if(o.conc&&CONC&&CONC.eq){const m=/CONC-[\w-]+/.exec(o.conc),L=m?CONC.eq.get(m[0]):null;if(L){o.cmap=new Map(L.map(r=>[r[4],r]));o.cgam=new Set(L.map(r=>r[2]+'|'+r[3]))}}return o}
-const W={spe:18,brand:14,gam:26,cab:12,conc:14,clean:10,drv:12,cut:14,fix:14,forme:14,dw:8,classe:6,life:6,gw:4,sdcm:3,gr:3,gar:3,fr:3,van:4,sec:6,opts:14,volt:6,angle:5,hgt:5,type:20,len:15,wid:6,dia:4,pw:12,flux:12,eff:4,cct:8,irc:6,ip:10,ik:6,ugr:4,grad:6};
+const W={asy:14,cp:22,spe:18,brand:14,gam:26,cab:12,conc:14,clean:10,drv:12,cut:14,fix:14,forme:14,dw:8,classe:6,life:6,gw:4,sdcm:3,gr:3,gar:3,fr:3,van:4,sec:6,opts:14,volt:6,angle:5,hgt:5,type:20,len:15,wid:6,dia:4,pw:12,flux:12,eff:4,cct:8,irc:6,ip:10,ik:6,ugr:4,grad:6};
 function sRel(v,t,full,zero){if(!(v>0))return 0.2;const d=Math.abs(v-t)/t;return d<=full?1:d>=zero?0:1-(d-full)/(zero-full)}
 function scoreRow(c,a){
   let sw=0,ss=0,fcap=0;const gaps=[];
   const add=(k,s,gap)=>{sw+=W[k];ss+=W[k]*s;if(s<0.999&&gap)gaps.push(gap)};
   if(c.type){const NEAR=['Tubulaire','Réglette étanche','Linéaire','Réglette'];const s=a.type===c.type?1:c.typeWeak?(c.type==='Suspension'?(a.type==='Linéaire'?0.6:a.type==='Highbay'?0.5:0):a.type==='Linéaire'?0.6:a.type==='Tubulaire'?0.45:(TCOMP[c.type]||[]).includes(a.type)?0.3:0):(NEAR.includes(c.type)&&NEAR.includes(a.type))?0.85:(TCOMP[c.type]||[]).includes(a.type)?0.55:0;add('type',s,'type '+a.type)}
   if(c.speq&&c.speq.length){const mis=a.speMiss||c.speq.map(q=>q.l),n=c.speq.length;add('spe',a.speAv?0.9:(n-mis.length)/n,a.speAv?'option spécifique à la carte (à confirmer avec SFEL) : '+c.speq.map(q=>q.l).join(', '):'option spécifique « '+mis.join(', ')+' » absente')}
+  if(c.asy){const cd=String(a.code||'').toUpperCase(),as=/AS\d{5}|-AS\d/.test(cd);add('asy',cd.includes(c.asy)?1:(c.asy==='AS'&&as)?1:as?0.4:0,'lentille '+(as?'asymétrique autre':'symétrique'))}
+  if(c.cp){add('cp',String(a.code||'').toUpperCase().startsWith(c.cp)?1:0,'gamme '+String(a.code||'').slice(0,3))}
   if(c.brand){add('brand',nz(a.brand)===nz(c.brand)?1:0,'marque '+a.brand)}
   if(c.gam){const L=String(c.gam).split(/;/).map(x=>nz(x)).filter(Boolean),g=nz(a.gamme);add('gam',L.some(x=>g===x)?1:L.some(x=>g.startsWith(x+' ')||x.startsWith(g+' '))?0.6:0,'gamme '+a.gamme)}
   if(c.len){const s=sRel(a.len,c.len,0.02,0.25);add('len',s,'longueur '+(a.len||'n.c.')+' mm')}
