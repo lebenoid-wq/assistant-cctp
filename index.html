@@ -734,14 +734,14 @@ function showOpt(g){
 const nz=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 const STOPW=new Set(['de','du','la','le','les','des','en','et','avec','sans','un','une','au','aux','a','pour','sur']);
 let VOC=null;
-function lev1(a,b){if(a===b)return true;if(Math.abs(a.length-b.length)>1||a.length<5)return false;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;if(a.length===b.length)return a.slice(i+1)===b.slice(i+1);const [x,y]=a.length>b.length?[a,b]:[b,a];return x.slice(i+1)===y.slice(i)}
+function lev1(a,b){if(a===b)return true;if(/\d/.test(a)||/\d/.test(b))return false;if(Math.abs(a.length-b.length)>1||a.length<5)return false;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;if(a.length===b.length)return a.slice(i+1)===b.slice(i+1);const [x,y]=a.length>b.length?[a,b]:[b,a];return x.slice(i+1)===y.slice(i)}
 function buildVoc(){if(VOC)return VOC;const mp=new Map(),skip=new Set(['Température de couleur','Étanchéité','Alimentation','Autre','Classe électrique']);
   for(const sp of SPECS)sp.fam.forEach((f,k)=>{if(skip.has(f))return;sp.attrs[k].forEach(a=>{if(!a.lab)return;const n=nz(a.lab);if(!n||/^[0-9 ]+$/.test(n)||mp.has(n)||TYPEKW.some(([re])=>re.test(' '+a.lab.toLowerCase()+' '))||/^classe\b/.test(n))return;const tk=n.split(' ').filter(w=>!STOPW.has(w));if(!tk.length||(tk.length===1&&tk[0].length<4))return;mp.set(n,{lab:a.lab,n,tk})})});
   return VOC=[...mp.values()]}
 function detectOpts(raw){const V=buildVoc(),tx=nz(raw).split(' ').filter(Boolean),hit=[];
   for(const v of V){let ok=true;for(const w of v.tk){if(!tx.some(x=>x===w||lev1(x,w))){ok=false;break}}if(ok)hit.push(v)}
   const keep=hit.filter(a=>!hit.some(b=>b!==a&&b.tk.length>a.tk.length&&a.tk.every(w=>b.tk.some(y=>y===w||lev1(y,w)))));
-  const seen=new Set(),out=[];for(const v of keep){const key=v.tk.join(' ');if(seen.has(key))continue;seen.add(key);out.push(v.lab)}
+  const seen=new Set(),out=[];for(const v of keep){const key=v.tk.map(w=>w.replace(/(?:es|s|e)$/,'')).join(' ');if(seen.has(key))continue;seen.add(key);out.push(v.lab)}
   return out.slice(0,8)}
 const dn=x=>nz(x).replace(/\b(couvercle|vasque|cache|globe|couverture)\b/g,'diffuseur');
 function realMiss(i,optq){const pr=picksReal(i),tx=dn((C.dl[i]||'')+' '+(C.ds[i]||'')+(C.xopal&&C.xopal[i]?' diffuseur opale':''));const sm=x=>x.replace(/semi[ -]?opale/g,'semiopale');const tx2=sm(tx);return optq.filter(q=>{const qn=dn(q.n);if(/^traversant|^cablage traversant/.test(qn)&&D.cab[C.cab[i]]==='Oui')return false;{const T2=' '+tx2+' ';if(T2.includes(' '+qn+' ')||qn.split(' ').every(w=>T2.includes(' '+w+' ')))return false}if(pr)for(let k=0;k<pr.sp.fam.length;k++){const vi=pr.sp.lists[k].indexOf(pr.vals[k]);if(vi>=0&&nz(pr.sp.attrs[k][vi].lab)===q.n)return false}return true}).map(q=>q.l)}
@@ -762,6 +762,15 @@ function detectConc(raw){
     const p=r[ix.lab]?/(\d+(?:[.,]\d+)?)\s*w/i.exec(String(r[ix.des])):null;if(sc>0&&p&&new RegExp('\\b'+p[1].replace('.',',?')+'\\s?w\\b').test(String(raw).toLowerCase().replace(/\./g,',')))sc+=2;
     if(sc>bs){bs=sc;best=r}}}
   return best&&bs>=3?(best[ix.lab]+' ('+best[ix.id]+')'):null}
+let SPEV=null;
+const SPESYN={TW:/\btw\b|tunable white|blancs? (?:variable|dynamique|ajustable|r[ée]glable)|variation de blancs?/i,UGR:/direct\s*(?:\/|et|-)?\s*indirect/i,T2:/(?:deux|2) presse[ -]?[ée]toupes?/i,DA:/double allumage|2 allumages/i,PAT:/\bpat[èe]res?\b/i,PLAF:/kit plafonnier/i,CPI:/d[ée]tect\w+ de pr[ée]sence et (?:de )?luminosit[ée]/i};
+function buildSpe(){if(SPEV)return SPEV;const m=new Map();const SKIP=new Set(['H9xx','RAL','PERSO','corps','90','A2','A3','Hxx','F4-1','F4-14']);
+  for(const g in OPT.gammes)for(const sec of OPT.gammes[g])for(const x of sec.spe){if(!x.label||SKIP.has(x.code))continue;const cl=x.label.split('(')[0].replace(/\s+/g,' ').trim().slice(0,70);const n=nz(cl);if(!n||n.length<6||m.has(n))continue;m.set(n,{lab:cl,n,code:x.code,tk:n.split(' ').filter(w=>w.length>=3&&!STOPW.has(w)&&!/^\d+$/.test(w))})}
+  return SPEV=[...m.values()]}
+function detectSpe(raw){if(!OPT)return[];const V=buildSpe(),t=' '+nz(raw)+' ',out=[],seen=new Set();
+  for(const v of V){let ok=false;const syn=SPESYN[v.code];if(syn&&syn.test(raw))ok=true;else if(!syn&&v.tk.length&&v.tk.every(w=>t.includes(' '+w+' ')||t.includes(' '+w+'s ')||(w.endsWith('s')&&t.includes(' '+w.slice(0,-1)+' '))))ok=true;
+    if(ok&&!seen.has(v.code+'|'+v.n)){const key=syn?v.code:v.n;if(seen.has(key))continue;seen.add(key);seen.add(v.code+'|'+v.n);out.push(v.lab)}}
+  return out.slice(0,5)}
 function parseCCTP(raw){
   let t=' '+raw.toLowerCase().replace(/[  ]/g,' ').replace(/\s+/g,' ')+' ';const o={},notes=[];
   let best=-1;for(const [re,ty] of TYPEKW){const m=re.exec(t);if(m&&(best<0||m.index<best)){best=m.index;o.type=ty}}
@@ -797,10 +806,11 @@ function parseCCTP(raw){
   if(/\bclean\b|salles? blanches?|salles? propres?|clean ?room/.test(t))o.clean='Oui';
   if(/y compris (?:le )?driver|driver (?:inclus|compris|int[ée]gr[ée])|avec driver|incl\.? driver|driver incl/.test(t)&&!/sans driver/.test(t))o.drv='Oui';
   {const nt=' '+nz(raw)+' ';const B=[];if(/ sfel /.test(nt))B.push('SFEL');if(/ (?:integratech|itgt|integra ?tech|integra tech) /.test(nt))B.push('Integratech');if(/ (?:lebenoid|lbnd) /.test(nt))B.push('Lébénoïd');if(B.length===1)o.brand=B[0];
-    if(!window.__GN){const STOP=new Set(['option','basic','compact','soft','deep','cube','digital','downlight','special','protect','profiles','disc','urban','horizon','tops','lips','eo','filament','factory','dune','mars','cory','sola','squad','arche','atoll','mona','turbo','rgd','rgbw','rgbtw','stub','alimentations led','lanternes','tracklights','special forte puissance']);window.__GN=[...new Set(D.gamme.filter(Boolean))].map(g=>({g,n:nz(g),st:STOP.has(nz(g))})).filter(x=>x.n.length>=3);{const f=new Map();for(const x of window.__GN){const w=x.n.split(' ')[0];if(x.n.includes(' ')&&w.length>=5&&!STOP.has(w)&&!/^(led|monocolor|multicolor|special|grande|rail|tracklight|blocs|alimentations|connecteur|slim|integra)/.test(w)){if(!f.has(w))f.set(w,[]);f.get(w).push(x)}}const ex=[];for(const [w,L] of f)if(!window.__GN.some(x=>x.n===w))ex.push({g:L[0].g,n:w,st:false,al:L.map(x=>x.g)});window.__GN=window.__GN.concat(ex)}window.__GN.sort((a,b)=>b.n.length-a.n.length)}
-    const G=[];let tt=nt;for(const x of window.__GN){const re=' '+x.n+' ';if(tt.includes(re)){if(x.st&&!(tt.includes(' gamme '+x.n+' ')||tt.includes(' '+x.n+' sfel ')||tt.includes(' sfel '+x.n+' ')||tt.includes(' integratech '+x.n+' ')))continue;G.push(...(x.al||[x.g]));tt=tt.split(re).join(' ')}}
+    if(!window.__GN){const STOP=new Set(['option','basic','compact','soft','deep','cube','digital','downlight','special','protect','profiles','disc','urban','horizon','tops','lips','eo','filament','factory','dune','mars','cory','sola','squad','arche','atoll','mona','rgbw','alimentations led','lanternes','tracklights','special forte puissance']);window.__GN=[...new Set(D.gamme.filter(Boolean))].map(g=>({g,n:nz(g),st:STOP.has(nz(g))})).filter(x=>x.n.length>=3||x.n==='ln');{const f=new Map();for(const x of window.__GN){const w=x.n.split(' ')[0];if(x.n.includes(' ')&&w.length>=5&&!STOP.has(w)&&!D.type.some(t=>t&&nz(t).split(' ')[0]===w)&&!/^(led|monocolor|multicolor|special|grande|rail|tracklight|blocs|alimentations|connecteur|slim|integra)/.test(w)){if(!f.has(w))f.set(w,[]);f.get(w).push(x)}}const ex=[];for(const [w,L] of f)if(!window.__GN.some(x=>x.n===w))ex.push({g:L[0].g,n:w,st:false,al:L.map(x=>x.g)});window.__GN=window.__GN.concat(ex)}window.__GN.sort((a,b)=>b.n.length-a.n.length)}
+    const G=[];let tt=nt;for(const x of window.__GN){const re=' '+x.n+' ';if(tt.includes(re)){if(x.n==='ln'&&!/\bLN\b/.test(raw))continue;if(x.st&&!(new RegExp('\\b'+x.g.replace(/[^A-Za-z0-9 ]/g,'')+'\\b').test(raw)&&x.g===x.g.toUpperCase()&&x.g.length>=4)&&!(tt.includes(' gamme '+x.n+' ')||tt.includes(' '+x.n+' sfel ')||tt.includes(' sfel '+x.n+' ')||tt.includes(' integratech '+x.n+' ')))continue;G.push(...(x.al||[x.g]));tt=tt.split(re).join(' ')}}
     if(G.length)o.gam=G.join(' ; ')}
   {const cd=detectConc(raw);if(cd)o.conc=cd}
+  {const sp_=detectSpe(raw);if(sp_.length)o.spe=sp_.join(' ; ')}
   if(/fabriqu[ée]e? en france|made in france|origine france/.test(t))o.fr='Oui';
   if(/[ée]clairage de secours int[ée]gr|avec secours|kit de secours|bloc de secours int[ée]gr/.test(t))o.sec='Oui';
   m=/\bqt[ée]\s*[=:]?\s*(\d+)/.exec(t);if(m)o.qty=+m[1];
@@ -838,7 +848,7 @@ function parseCCTP(raw){
   return {o,notes};
 }
 const REL={cab:['Réglette étanche','Tubulaire','Linéaire','Réglette'],drv:['Dalle LED'],clean:[],cut:['Downlight'],forme:[],hgt:[],volt:['Ruban LED','Alimentation LED'],angle:['Ruban LED','Projecteur','Downlight','Highbay','Éclairage public','Projecteur sur rail'],pwid:['Ruban LED'],phgt:['Ruban LED'],gw:[],sdcm:[],gr:[],gar:[],fr:[],van:[],sec:[]};
-const CRIT=[['type','Type','sel'],['len','Longueur (mm)','n'],['wid','Largeur (mm)','n'],['dia','Diamètre (mm)','n'],['hgt','Hauteur (mm)','n'],['cut','Diamètre de découpe (mm)','n'],['pw','Puissance (W)','n'],['flux','Flux (lm)','n'],['eff','Efficacité (lm/W)','n'],['cct','Temp. couleur (K)','n'],['irc','IRC min.','n'],['ip','IP min.','n'],['ik','IK min.','n'],['ugr','UGR max.','n'],['volt','Tension (V)','n'],['angle','Angle (°)','n'],['classe','Classe électrique','selc'],['fix','Pose / fixation','selx'],['forme','Forme','self'],['dw','Mots de la désignation (couleur, diffuseur, matière…)','t'],['life','Durée de vie L80 min. (h)','n'],['gw','Fil incandescent min. (°C)','n'],['sdcm','SDCM max.','n'],['gr','Risque photobiologique : groupe max.','n'],['gar','Garantie min. (ans)','n'],['fr','Fabriqué en France','selb'],['van','Anti-vandale','selb'],['sec','Secours intégré','selb'],['pwid','Profilé associé : largeur (mm)','n'],['phgt','Profilé associé : hauteur (mm)','n'],['opts','Options demandées (séparées par ;)','t'],['grad','Gradation','selg'],['conc','Concurrent ciblé (efface pour ignorer)','t'],['clean','Salle blanche','selb'],['cab','Câblage traversant','selb'],['drv','Driver inclus','selb'],['brand','Marque (SFEL, Integratech, Lébénoïd)','t'],['gam','Nom de produit / gamme','t']];
+const CRIT=[['type','Type','sel'],['len','Longueur (mm)','n'],['wid','Largeur (mm)','n'],['dia','Diamètre (mm)','n'],['hgt','Hauteur (mm)','n'],['cut','Diamètre de découpe (mm)','n'],['pw','Puissance (W)','n'],['flux','Flux (lm)','n'],['eff','Efficacité (lm/W)','n'],['cct','Temp. couleur (K)','n'],['irc','IRC min.','n'],['ip','IP min.','n'],['ik','IK min.','n'],['ugr','UGR max.','n'],['volt','Tension (V)','n'],['angle','Angle (°)','n'],['classe','Classe électrique','selc'],['fix','Pose / fixation','selx'],['forme','Forme','self'],['dw','Mots de la désignation (couleur, diffuseur, matière…)','t'],['life','Durée de vie L80 min. (h)','n'],['gw','Fil incandescent min. (°C)','n'],['sdcm','SDCM max.','n'],['gr','Risque photobiologique : groupe max.','n'],['gar','Garantie min. (ans)','n'],['fr','Fabriqué en France','selb'],['van','Anti-vandale','selb'],['sec','Secours intégré','selb'],['pwid','Profilé associé : largeur (mm)','n'],['phgt','Profilé associé : hauteur (mm)','n'],['opts','Options demandées (séparées par ;)','t'],['grad','Gradation','selg'],['conc','Concurrent ciblé (efface pour ignorer)','t'],['clean','Salle blanche','selb'],['cab','Câblage traversant','selb'],['drv','Driver inclus','selb'],['brand','Marque (SFEL, Integratech, Lébénoïd)','t'],['gam','Nom de produit / gamme','t'],['spe','Options spécifiques demandées (séparées par ;)','t']];
 function buildCctp(){
   const box=$('#cctpPills');
   for(const [k,l,kind] of CRIT){
@@ -873,13 +883,14 @@ function buildCctp(){
 let CCTPNOTES=[];
 setTimeout(()=>{try{pillVis()}catch(e){}},0);
 let CCTPWEAK=null;
-function cctpCrit(){const o={};for(const [k,,kind] of CRIT){const v=$('#cc_'+k).value.trim();if(v==='')continue;o[k]=kind==='n'?toNum(v):v}if(o.opts){o.optq=o.opts.split(/;/).map(x=>x.trim()).filter(Boolean).map(x=>({l:x,n:nz(x)}))}for(const k in o)if(typeof o[k]==='number'&&isNaN(o[k]))delete o[k];if(o.type&&o.type===CCTPWEAK)o.typeWeak=1;if(o.conc&&CONC&&CONC.eq){const m=/CONC-[\w-]+/.exec(o.conc),L=m?CONC.eq.get(m[0]):null;if(L){o.cmap=new Map(L.map(r=>[r[4],r]));o.cgam=new Set(L.map(r=>r[2]+'|'+r[3]))}}return o}
-const W={brand:14,gam:26,cab:12,conc:14,clean:10,drv:12,cut:14,fix:14,forme:14,dw:8,classe:6,life:6,gw:4,sdcm:3,gr:3,gar:3,fr:3,van:4,sec:6,opts:14,volt:6,angle:5,hgt:5,type:20,len:15,wid:6,dia:4,pw:12,flux:12,eff:4,cct:8,irc:6,ip:10,ik:6,ugr:4,grad:6};
+function cctpCrit(){const o={};for(const [k,,kind] of CRIT){const v=$('#cc_'+k).value.trim();if(v==='')continue;o[k]=kind==='n'?toNum(v):v}if(o.spe){o.speq=o.spe.split(/;/).map(x=>x.trim()).filter(Boolean).map(x=>({l:x,n:nz(x)}))}if(o.opts){o.optq=o.opts.split(/;/).map(x=>x.trim()).filter(Boolean).map(x=>({l:x,n:nz(x)}))}for(const k in o)if(typeof o[k]==='number'&&isNaN(o[k]))delete o[k];if(o.type&&o.type===CCTPWEAK)o.typeWeak=1;if(o.conc&&CONC&&CONC.eq){const m=/CONC-[\w-]+/.exec(o.conc),L=m?CONC.eq.get(m[0]):null;if(L){o.cmap=new Map(L.map(r=>[r[4],r]));o.cgam=new Set(L.map(r=>r[2]+'|'+r[3]))}}return o}
+const W={spe:18,brand:14,gam:26,cab:12,conc:14,clean:10,drv:12,cut:14,fix:14,forme:14,dw:8,classe:6,life:6,gw:4,sdcm:3,gr:3,gar:3,fr:3,van:4,sec:6,opts:14,volt:6,angle:5,hgt:5,type:20,len:15,wid:6,dia:4,pw:12,flux:12,eff:4,cct:8,irc:6,ip:10,ik:6,ugr:4,grad:6};
 function sRel(v,t,full,zero){if(!(v>0))return 0.2;const d=Math.abs(v-t)/t;return d<=full?1:d>=zero?0:1-(d-full)/(zero-full)}
 function scoreRow(c,a){
   let sw=0,ss=0,fcap=0;const gaps=[];
   const add=(k,s,gap)=>{sw+=W[k];ss+=W[k]*s;if(s<0.999&&gap)gaps.push(gap)};
   if(c.type){const NEAR=['Tubulaire','Réglette étanche','Linéaire','Réglette'];const s=a.type===c.type?1:c.typeWeak?(c.type==='Suspension'?(a.type==='Linéaire'?0.6:a.type==='Highbay'?0.5:0):a.type==='Linéaire'?0.6:a.type==='Tubulaire'?0.45:(TCOMP[c.type]||[]).includes(a.type)?0.3:0):(NEAR.includes(c.type)&&NEAR.includes(a.type))?0.85:(TCOMP[c.type]||[]).includes(a.type)?0.55:0;add('type',s,'type '+a.type)}
+  if(c.speq&&c.speq.length){const mis=a.speMiss||c.speq.map(q=>q.l),n=c.speq.length;add('spe',a.speAv?0.9:(n-mis.length)/n,a.speAv?'option spécifique à la carte (à confirmer avec SFEL) : '+c.speq.map(q=>q.l).join(', '):'option spécifique « '+mis.join(', ')+' » absente')}
   if(c.brand){add('brand',nz(a.brand)===nz(c.brand)?1:0,'marque '+a.brand)}
   if(c.gam){const L=String(c.gam).split(/;/).map(x=>nz(x)).filter(Boolean),g=nz(a.gamme);add('gam',L.some(x=>g===x)?1:L.some(x=>g.startsWith(x+' ')||x.startsWith(g+' '))?0.6:0,'gamme '+a.gamme)}
   if(c.len){const s=sRel(a.len,c.len,0.02,0.25);add('len',s,'longueur '+(a.len||'n.c.')+' mm')}
@@ -893,7 +904,7 @@ function scoreRow(c,a){
   if(c.flux){const s=a.flux>=c.flux*0.97?((a.flux<=c.flux*1.5||inR)?1:0.8):sRel(a.flux,c.flux,0.03,0.3);add('flux',s,'flux '+(a.flux?fr(a.flux):'n.c.')+' lm')}
   if(c.eff){const s=a.eff>=c.eff*0.95?1:sRel(a.eff,c.eff,0.05,0.3);add('eff',s,'efficacité '+(a.eff||'n.c.')+' lm/W')}
   if(c.cct){const ks=String(a.cct||'').split(/[\/\s;,]+/).map(Number).filter(Boolean);let s=0.3;if(ks.length){const d=Math.min(...ks.map(k=>Math.abs(k-c.cct)));s=d===0?1:d<=300?0.6:d<=1000?0.3:0}add('cct',s,'CCT '+(a.cct||'n.c.')+' K')}
-  if(c.irc){const s=a.irc>0?(a.irc>=c.irc?1:0):0.5;add('irc',s,'IRC '+(a.irc||'n.c.'))}
+  if(c.irc){const s=a.irc>0?(a.irc>=c.irc?1:0):0.5;add('irc',s,'IRC '+(a.irc||'n.c.'));if(a.h9)gaps.push('IRC > 90 : option à la carte, à confirmer avec SFEL')}
   if(c.ip){const s=a.ip>0?(a.ip>=c.ip?1:0):0;add('ip',s,'IP '+(a.ip||'n.c.'))}
   if(c.ik){const s=a.ik>0?(a.ik>=c.ik?1:0):0;add('ik',s,'IK '+(a.ik?String(a.ik).padStart(2,'0'):'n.c.'))}
   if(c.ugr){const s=a.ugr>0?(a.ugr<=c.ugr?1:0):0.4;add('ugr',s,'UGR '+(a.ugr||'n.c.'))}
@@ -924,21 +935,29 @@ function attrsOf(i){const pr=pwRange(i);const gm=D.gamme[C.gamme[i]],br=D.brand[
 function cctpTop(c0){const c=Object.assign({},c0);delete c.pwid;delete c.phgt;
   if(c.type==='Bloc de secours'){const g=D.gamme.indexOf('Blocs de secours'),o=[];for(let i=0;i<N0;i++)if(C.gamme[i]===g)o.push({i,score:25,gaps:['unité de secours pour driver, pas un BAES/SATI certifié'],sp:null});return o}
   const cand=[];
-  for(let i=0;i<N0;i++){const a=attrsOf(i);if(c.type&&!(a.type===c.type||(TCOMP[c.type]||[]).includes(a.type)))continue;if(c.optq)a.optMiss=realMiss(i,c.optq);const r=scoreRow(c,a);cand.push({i,score:r.score,gaps:r.gaps,sp:null})}
+  for(let i=0;i<N0;i++){const a=attrsOf(i);if(c.type&&!(a.type===c.type||(TCOMP[c.type]||[]).includes(a.type)))continue;if(c.optq)a.optMiss=realMiss(i,c.optq);if(c.speq)a.speMiss=realMiss(i,c.speq);const r=scoreRow(c,a);cand.push({i,score:r.score,gaps:r.gaps,sp:null})}
   for(const sp of SPECS){const ex=sp.ex,a=attrsOf(ex);if(c.type&&!(a.type===c.type||(TCOMP[c.type]||[]).includes(a.type)))continue;
     const vals=parseVals(sp,C.code[ex]),cur=vals.map((v,k)=>Math.max(0,sp.lists[k].indexOf(v)));let changed=false;const a2=Object.assign({},a);
     sp.fam.forEach((f,k)=>{
-      if(f==='Température de couleur'&&c.cct){let bi=-1,bs=-1;sp.attrs[k].forEach((at,vi)=>{if(at.cct){const s=Math.abs(+at.cct-c.cct);const need=c.irc>(C.irc[ex]||0);const sc=1e6-s+(need?(at.irc>=c.irc?500:0):(at.irc?-500:0));if(sc>bs){bs=sc;bi=vi}}});if(bi>=0&&bi!==cur[k]){cur[k]=bi;changed=true}if(bi>=0){a2.cct=sp.attrs[k][cur[k]].cct;if(sp.attrs[k][cur[k]].irc)a2.irc=sp.attrs[k][cur[k]].irc}}
+      if(f==='Température de couleur'&&(c.cct||c.irc)){const tc=c.cct||+(sp.attrs[k][cur[k]]&&sp.attrs[k][cur[k]].cct)||+(D.cct[C.cct[ex]])||4000;let bi=-1,bs=-1;sp.attrs[k].forEach((at,vi)=>{if(at.cct){const s=Math.abs(+at.cct-tc);const need=c.irc>(C.irc[ex]||0);const sc=1e6-s+(need?(at.irc>=c.irc?500:0):(at.irc?-500:0));if(sc>bs){bs=sc;bi=vi}}});if(bi>=0&&bi!==cur[k]){cur[k]=bi;changed=true}if(bi>=0){a2.cct=sp.attrs[k][cur[k]].cct;if(sp.attrs[k][cur[k]].irc)a2.irc=sp.attrs[k][cur[k]].irc}}
       else if(f==='Alimentation'&&c.grad){const want=c.grad==='any'?null:c.grad;let bi=-1;sp.attrs[k].forEach((at,vi)=>{if(at.grad&&(want?at.grad===want:at.grad!=='Non')&&bi<0)bi=vi});if(bi>=0){if(bi!==cur[k]){cur[k]=bi;changed=true}a2.grad=sp.attrs[k][bi].grad}}
       else if(f==='Classe électrique'&&c.classe){let bi=-1;sp.attrs[k].forEach((at,vi)=>{if(bi<0&&new RegExp('^classe '+c.classe+'$','i').test(at.lab||''))bi=vi});if(bi>=0){if(bi!==cur[k]){cur[k]=bi;changed=true}a2.cl=c.classe}}
       else if(f==='Étanchéité'&&c.ip){let bi=-1,bv=1e9;sp.attrs[k].forEach((at,vi)=>{if(at.ip!=null&&at.ip>=c.ip&&at.ip<bv){bv=at.ip;bi=vi}});if(bi>=0){if(bi!==cur[k]){cur[k]=bi;changed=true}a2.ip=sp.attrs[k][bi].ip}}
     });
-    const miss=[];if(c.optq)for(const q of c.optq){let f=false;sp.fam.forEach((fm,k)=>{if(f)return;sp.attrs[k].forEach((at,vi)=>{const lb=at.lab||at.alt;if(!f&&lb&&(nz(lb)===q.n||(q.n.includes(' ')&&nz(lb).startsWith(q.n+' ')))){f=true;if(cur[k]!==vi){cur[k]=vi;changed=true}if(/^traversant/.test(q.n))a2.cab='Oui'}})});if(!f)miss.push(q.l)}
-    a2.optMiss=miss;
+    let miss=[];if(c.optq)for(const q of c.optq){let f=false;const qw=q.n.split(' ').filter(Boolean);
+      for(const pass of [0,1]){if(f)break;sp.fam.forEach((fm,k)=>{if(f)return;sp.attrs[k].forEach((at,vi)=>{const lb=at.lab||at.alt;if(f||!lb)return;const ln=nz(lb);const ok=pass===0?(ln===q.n||(q.n.includes(' ')&&ln.startsWith(q.n+' '))):(qw.length&&(qw.length>1||qw[0].length>=4)&&qw.every(w=>(' '+ln+' ').includes(' '+w+' ')));if(ok){f=true;if(cur[k]!==vi){cur[k]=vi;changed=true}if(/^traversant/.test(q.n))a2.cab='Oui'}})})}
+      if(!f)miss.push(q.l)}
+    if(miss.length)miss=miss.filter(l=>realMiss(ex,[{l,n:nz(l)}]).length);
+    let h9=false;if(c.irc>=90&&!(a2.irc>=90)){const gn0=D.gamme[C.gamme[ex]];if((OPT.gammes[gn0]||[]).some(sec=>sec.spe.some(x=>x.code==='H9xx'))){const kt=sp.fam.indexOf('Température de couleur');if(kt>=0&&/^H\d\d$/.test(sp.lists[kt][cur[kt]]||'')){h9=kt;a2.irc=90;a2.h9=1;changed=true}}}
+    a2.optMiss=miss;let speS='',speL=h9!==false?['IRC > 90 (à la carte)']:[];
+    if(c.speq){const gn=D.gamme[C.gamme[ex]],all=[];for(const sec of (OPT.gammes[gn]||[]))for(const x of sec.spe)all.push(x);const hit=[];let miss2=[];
+      for(const q of c.speq){const x=all.find(x=>x.label&&nz(x.label.split('(')[0].replace(/\s+/g,' ').trim().slice(0,70))===q.n);if(x){if(!hit.find(h=>h.code===x.code))hit.push(x)}else miss2.push(q.l)}
+      miss2=miss2.filter(l=>realMiss(ex,[{l,n:nz(l)}]).length);
+      a2.speMiss=miss2;if(hit.length&&!miss2.length){a2.speAv=true;speL=speL.concat(hit.map(x=>x.label.split('(')[0].trim()));speS=hit.map(x=>/x{2,}|\//i.test(x.code)?'':x.code).join('');changed=true}}
     if(!changed)continue;
     let bad=false;for(let i2=0;i2<sp.L&&!bad;i2++)for(const j of sp.prev[i2])if(sp.fbn[j][i2].has(cur[j]*64+cur[i2])){bad=true;break}
-    if(bad)continue;const code=sp.p+cur.map((v,k)=>sp.lists[k][v]).join('');if(CODEIDX.has(code)||sp.exclSet.has(code))continue;
-    const r=scoreRow(c,a2);cand.push({i:-1,score:r.score,gaps:r.gaps,sp,cur:cur.slice(),code})}
+    if(bad)continue;const kc=sp.fam.indexOf('Classe électrique');const code=sp.p+cur.map((v,k)=>(k===kc?speS:'')+(k===h9?'H9'+sp.lists[k][v].slice(1):sp.lists[k][v])).join('')+(kc<0?speS:'');if(!speS&&h9===false&&(CODEIDX.has(code)||sp.exclSet.has(code)))continue;
+    const r=scoreRow(c,a2);cand.push({i:-1,score:r.score,gaps:r.gaps,sp,cur:cur.slice(),code,speL})}
   cand.sort((x,y)=>y.score-x.score||(x.i>=0?0:1)-(y.i>=0?0:1));
   const seen=new Set(),top=[];
   for(const r of cand){if(top.length>=15)break;let id=r.i;const key=r.sp?'S'+r.sp.p:(()=>{const a=attrsOf(id);return [C.brand[id],C.gamme[id],a.len,a.wid,a.pw,a.flux,a.cct,a.ip,a.ik,a.grad].join('|')})();if(seen.has(key))continue;seen.add(key);top.push(r)}
@@ -957,7 +976,7 @@ function cctpMatch(){
   const tableFor=top=>{
   const head=['Score','Marque','Référence','Désignation','Type','Long. (mm)','Découpe (mm)','IP','IK','W','lm','lm/W','CCT (K)','IRC','Gradation','Positionnement','Site / FT','Écarts avec la demande'];
   const tb=el('tbody');
-  for(const r of top){const id=r.i>=0?r.i:materialize(r.sp,r.cur,r.code,SLOTMAX+(slot++));
+  for(const r of top){const id=r.i>=0?r.i:materialize(r.sp,r.cur,r.code,SLOTMAX+(slot++));if(r.i<0&&r.speL&&r.speL.length)C.ds[id]+=' · option spécifique : '+r.speL.join(', ');
     const tr=el('tr',{tabindex:'0'},
       el('td',null,el('span',{class:'score '+(r.score>=85?'hi':r.score<60?'lo':''),text:r.score+' %'})),
       el('td',{class:'b-'+D.brand[C.brand[id]],text:D.brand[C.brand[id]]}),el('td',{class:'mono',text:C.code[id]}),el('td',{class:'des',text:C.ds[id]}),el('td',{text:D.type[C.type[id]]}),
