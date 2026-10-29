@@ -96,7 +96,7 @@ td.mono{font-family:var(--f-mono);font-size:12px}td.des{white-space:normal;min-w
 .drawer{position:fixed;inset:0;background:rgba(5,10,20,.55);display:flex;justify-content:flex-end;z-index:30}
 .drawer>div{background:var(--bg);width:min(780px,100%);height:100%;overflow:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 48px 18px;border-left:1px solid var(--line)}
 .dh{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
-.dh .big{width:64px;height:64px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--bc);flex:0 0 64px}.dh .big svg{width:42px;height:42px}
+.dh .big{width:64px;height:64px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--bc);flex:0 0 64px}.dh .big svg{width:42px;height:42px}.dh .big.ph{width:120px;height:120px;flex:0 0 120px;padding:0;overflow:hidden}
 .specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:12px 0}
 .spec{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px}.spec small{display:block;color:var(--muted);font-size:11px}.spec b{font-size:16px;font-variant-numeric:tabular-nums}
 .kv{display:grid;grid-template-columns:minmax(120px,210px) 1fr;gap:4px 14px;font-size:13px;margin:0}.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}
@@ -257,7 +257,7 @@ const fr=n=>n.toLocaleString('fr-FR');
 /* ---------- couche virtuelle : combinaisons d'options du catalogue SFEL (calculées à la demande) ---------- */
 const KEYS=['brand','gamme','type','h','w','l','d','ip','ik','ipt','ikt','pw','flux','eff','cct','irc','grad','col','det','cab','pos','opt','matd','matc','ugr'];
 const SPIRC=new Map();let SPECS=[],SPG=new Map(),VT=0,SLOTMAX=4000,VSEG=[],VTOT=0;
-const SYN={bandeau:'ruban',bandeaux:'ruban',strip:'ruban',rubans:'ruban',led:'led',tube:'tubulaire',tubes:'tubulaire',t8:'tubulaire',neon:'tubulaire',néon:'tubulaire',panel:'dalle',panneau:'dalle',pavé:'dalle',pave:'dalle',dalles:'dalle',spot:'downlight',spots:'downlight',downray:'downlight',cloche:'highbay',gamelle:'highbay',lanterne:'public',candélabre:'public',flood:'projecteur',floodlight:'projecteur',profil:'profilé',profils:'profilé',driver:'alimentation',transformateur:'alimentation',alim:'alimentation',luminaire:'',luminaires:''};
+const SYN={essential:'ess',bandeau:'ruban',bandeaux:'ruban',strip:'ruban',rubans:'ruban',led:'led',tube:'tubulaire',tubes:'tubulaire',t8:'tubulaire',neon:'tubulaire',néon:'tubulaire',panel:'dalle',panneau:'dalle',pavé:'dalle',pave:'dalle',dalles:'dalle',spot:'downlight',spots:'downlight',downray:'downlight',cloche:'highbay',gamelle:'highbay',lanterne:'public',candélabre:'public',flood:'projecteur',floodlight:'projecteur',profil:'profilé',profils:'profilé',driver:'alimentation',transformateur:'alimentation',alim:'alimentation',luminaire:'',luminaires:''};
 const SEP='\u0001',ALIM={B1:'Non',B4:'DALI',B8:'DSI'};
 const idxIn=(arr,v)=>{let k=arr.indexOf(v);if(k<0){arr.push(v);k=arr.length-1}return k};
 const baseFam=n=>n.split('#')[0];
@@ -589,6 +589,48 @@ function siteOf(i){
     else return null;
     return {url:SITE_I+cat+'/'+(sl?sl+'/':''),txt:sl?'Page produit Integratech':'Page catégorie Integratech (variante non identifiée)'}}
   return null}
+/* ---------- photos et documents ---------- */
+let MEDIA=null,PH=null;
+const DOCIDX='https://integratech.fr/service/centre-de-documentation/';
+async function mediaBox(i){
+  const b=D.brand[C.brand[i]];if(i>=N0)i=C.base[i-N0];const code=C.code[i];
+  if(!MEDIA){try{MEDIA=await getJSON('data/media.json')}catch(e){MEDIA={u:[],m:{},sfel:{}}}}
+  let rec=null,sf=null;
+  if(b==='SFEL')sf=sfelMedia(i);else rec=MEDIA.m[code];
+  const U=x=>(x||[]).map(k=>MEDIA.u[k]);PH=null;
+  const box=el('section',{class:'panel',style:'margin:12px 0'},el('h2',{text:'Photos et documents'}));
+  const lk=(t,url,ico)=>el('a',{class:'btn',href:url,target:'_blank',rel:'noopener',style:'display:inline-block;margin:0 8px 8px 0;text-decoration:none',text:(ico||'↗')+' '+t});
+  const img=(url,alt,big)=>{const im=el('img',{src:url,alt,loading:'lazy',referrerpolicy:'no-referrer',style:big?'max-width:100%;max-height:260px;border-radius:8px;background:#fff;object-fit:contain':'height:84px;border-radius:6px;background:#fff;object-fit:contain'});im.onerror=()=>{const p=im.parentNode;if(p&&p.tagName==='A'){if(big){p.textContent='🖼 Ouvrir la photo (aperçu indisponible ici)'}else p.remove()}else im.remove()};const a=el('a',{href:url,target:'_blank',rel:'noopener',style:'display:inline-block;margin:0 8px 8px 0'},im);return a};
+  let n=0;
+  if(sf){
+    const ph=sf.ph||[];if(ph.length){PH=ph[0];const g=el('div');ph.forEach((u,j)=>g.append(img(u,sf.lab+' – '+(sf.phl&&sf.phl[j]||'photo'),j===0)));box.append(g);n++}
+    box.append(el('p',{class:'note',style:'margin:2px 0 8px',text:'Documents de la gamme '+sf.lab+' (page SFEL) : ils couvrent toutes les références de la gamme, pas uniquement celle-ci.'}));
+    const d=el('div');for(const [t,u] of sf.dc||[]){d.append(lk(t,u,/\.zip$/i.test(u)?'⬇':'↗'));n++}box.append(d);
+    return n?box:null}
+  const ph=rec&&U(rec.p&&rec.p.length?rec.p:rec.b&&rec.b.length?rec.b:rec.g);
+  if(ph&&ph.length){PH=ph[0];const g=el('div');ph.slice(0,1).forEach(u=>g.append(img(u,code,true)));U(rec.a).slice(0,2).forEach(u=>g.append(img(u,'ambiance')));U(rec.s).slice(0,2).forEach(u=>g.append(img(u,'schéma / dimensions')));box.append(g);n++;
+    if(!(rec.p&&rec.p.length)&&!(rec.b&&rec.b.length)&&rec.g)box.append(el('p',{class:'note',style:'margin:0 0 8px',text:'Photo de la gamme (pas de photo propre à cette référence).'}))}
+  else if(rec&&(rec.a||rec.s)){const g=el('div');U(rec.a).concat(U(rec.s)).slice(0,3).forEach(u=>g.append(img(u,'visuel')));box.append(g);n++}
+  const d=el('div');
+  if(rec){
+    for(const u of U(rec.f)){d.append(lk('Fiche technique (PDF)',u,'📄'));n++}
+    {const nn=U(rec.n);nn.forEach((u,j)=>{d.append(lk('Notice de montage'+(nn.length>1?' '+(j+1):''),u,'📘'));n++})}
+    for(const u of U(rec.c)){d.append(lk('Déclaration de conformité (CE)',u,'✅'));n++}
+    for(const u of U(rec.e)){d.append(lk('Profil environnemental (PEP)',u,'🌱'));n++}
+    for(const u of U(rec.l)){d.append(lk(rec.lg?'Fichiers photométriques LDT (gamme)':'Fichiers photométriques LDT',u,'💡'));n++}
+    for(const u of U(rec.d)){d.append(lk('Modèle 3D (STEP)',u,'🧊'));n++}
+    for(const u of U(rec.r)){d.append(lk('Vues 360°',u,'🔄'));n++}
+    for(const u of U(rec.v)){d.append(lk('Vidéo',u,'▶'));n++}
+    for(const u of U(rec.w)){d.append(lk('Page produit',u));n++}
+  }
+  if(b==='Integratech'&&!(rec&&rec.l)){d.append(lk('LDT : centre de documentation Integratech',DOCIDX,'💡'));n++}
+  box.append(d);
+  if(!n)return null;return box}
+function sfelMedia(i){const M=MEDIA.sfel||{};const g=D.gamme[C.gamme[i]],code=C.code[i],ds=String(C.ds[i]||'');
+  const pick=sfelPage(g,code,ds);return pick&&M[pick]||null}
+function sfelPage(g,code,ds){const M=MEDIA.sfel||{};let k=String(ds).split(/ LED\b/)[0].trim().toUpperCase();
+  if(/^OPA-MO/.test(code))k='OPALI MO';else if(/^OPA-MU/.test(code))k='OPALI MU';else if(/^OPO-MO/.test(code))k='OPOM MO';else if(/^OPO-MU/.test(code))k='OPOM MU';
+  if(M[k])return k;const gu=String(g).toUpperCase();if(M[gu])return gu;if(gu==='PANO')return 'PANO GR';return null}
 const siteBox=i=>{const s=siteOf(i);return s?el('p',{class:'note',style:'margin:8px 0'},el('a',{href:s.url,target:'_blank',rel:'noopener',text:'↗ '+s.txt}),' ',el('span',{text:''})):el('p',{class:'note',style:'margin:8px 0'},'Produit absent des sites web : fiche technique à demander à l\'ADV ou au chef de marque.')};
 function cell(c,i){const v=c[1](i),td=el('td'),k=c[2]||'';
   if(k==='b'){td.textContent=v;td.className='b-'+v}
@@ -691,6 +733,7 @@ async function compatBlock(i){
     grp('Connecteurs et coupleurs ('+(wd?wd+' mm':'largeur n.c.')+')',cn.slice(0,12),cn.length?'':'Aucun connecteur du catalogue ne correspond exactement à cette largeur ou à ce type de ruban.');
     return box}
   return null}
+
 async function openRef(i){
   const dr=$('#drawer'),body=$('#dbody');dr.classList.remove('hidden');body.textContent='Chargement…';
   const close=()=>dr.classList.add('hidden');dr.onclick=e=>{if(e.target===dr)close()};document.onkeydown=e=>{if(e.key==='Escape')close()};
@@ -703,6 +746,7 @@ async function openRef(i){
   body.append(el('div',{class:'specs'},sp('Puissance',stepW(i)?stepW(i)+' W (paliers Power Switch)':C.pw[i]?C.pw[i]+' W':''),sp('Flux',stepL(i)?stepL(i)+' lm':C.flux[i]?fr(C.flux[i])+' lm':''),sp('Efficacité',C.eff[i]?C.eff[i]+' lm/W':''),sp('CCT',String(D.cct[C.cct[i]]||'')+(D.cct[C.cct[i]]?' K':'')),sp('IP / IK',(D.ipt[C.ipt[i]]||'n.c.')+' / '+(D.ikt[C.ikt[i]]||'n.c.')),sp('Dimensions',[C.l[i],C.w[i],C.h[i]].filter(Boolean).join(' × ')+([C.l[i],C.w[i],C.h[i]].some(Boolean)?' mm':'')||(C.d[i]?'Ø '+C.d[i]+' mm':'')),sp('Positionnement',D.pos[C.pos[i]]),sp('UGR',C.ugr[i]?String(C.ugr[i]):'')));
   if(i>=N0)body.append(el('section',{class:'panel',style:'margin:12px 0;border-color:var(--warn)'},el('h2',{text:'Référence générée'}),el('p',{class:'note',style:'margin:0',text:'Construite à partir des options du catalogue SFEL 2026 (options : '+C.ol[i-N0]+'). Caractéristiques techniques reprises du même modèle '+C.code[C.base[i-N0]]+', sauf température de couleur, IP, gradation et détection déduites des options. Flux, puissance et dimensions sont à confirmer avec SFEL.'})));
   body.append(siteBox(i));
+  try{const mb=await mediaBox(i);if(mb)body.append(mb);if(PH){const bg=body.querySelector('.dh .big');if(bg){const ic=bg.innerHTML,im=el('img',{src:PH,alt:'',referrerpolicy:'no-referrer',style:'width:100%;height:100%;object-fit:contain;border-radius:12px;background:#fff'});im.onerror=()=>{bg.innerHTML=ic;bg.classList.remove('ph')};bg.innerHTML='';bg.classList.add('ph');bg.append(im)}}}catch(e){}
   const l=linkOf(i);if(l)body.append(linkBlock(l));
   if(i<N0&&b==='SFEL'&&specFor(D.gamme[C.gamme[i]],C.code[i]))body.append(el('button',{class:'btn pri',style:'margin-bottom:12px',onclick:()=>{close();cfgFromRef(i)},text:'Modifier les options de cette référence'}));
   try{const cb=await compatBlock(i);if(cb)body.append(cb)}catch(e){}
@@ -792,21 +836,22 @@ function showOpt(g){
     c.append(b)});
 }
 /* ---------- recherche à partir d'une ligne de CCTP ---------- */
-const nz=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const nz=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/(?<![a-z\d])(?:(\d) (\d{3})|(\d{2}) (000))(?![\d])/g,'$1$2$3$4');
 const STOPW=new Set(['de','du','la','le','les','des','en','et','avec','sans','un','une','au','aux','a','pour','sur']);
 let VOC=null;
 function lev1(a,b){if(a===b)return true;if(/\d/.test(a)||/\d/.test(b))return false;if(Math.abs(a.length-b.length)>1||a.length<5)return false;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;if(a.length===b.length)return a.slice(i+1)===b.slice(i+1);const [x,y]=a.length>b.length?[a,b]:[b,a];return x.slice(i+1)===y.slice(i)}
 function buildVoc(){if(VOC)return VOC;const mp=new Map(),skip=new Set(['Température de couleur','Étanchéité','Alimentation','Autre','Classe électrique']);
-  for(const sp of SPECS)sp.fam.forEach((f,k)=>{if(skip.has(f))return;sp.attrs[k].forEach(a=>{if(!a.lab)return;const n=nz(a.lab);if(!n||/^[0-9 ]+$/.test(n)||mp.has(n)||TYPEKW.some(([re])=>re.test(' '+a.lab.toLowerCase()+' '))||/^classe\b/.test(n))return;const tk=n.split(' ').filter(w=>!STOPW.has(w));if(!tk.length||(tk.length===1&&tk[0].length<4))return;mp.set(n,{lab:a.lab,n,tk})})});
+  for(const sp of SPECS)sp.fam.forEach((f,k)=>{if(skip.has(f))return;sp.attrs[k].forEach(a=>{if(!a.lab)return;const n=nz(a.lab);if(!n||/^[0-9 ]+$/.test(n)||mp.has(n)||TYPEKW.some(([re])=>re.test(' '+a.lab.toLowerCase()+' '))||/^classe\b/.test(n))return;const tk=nz(a.lab.replace(/\([^)]*uniquement[^)]*\)/i,'')).split(' ').filter(w=>!STOPW.has(w));if(!tk.length||(tk.length===1&&tk[0].length<4))return;mp.set(n,{lab:a.lab,n,tk})})});
   return VOC=[...mp.values()]}
-function detectOpts(raw){const V=buildVoc(),tx=nz(raw).split(' ').filter(Boolean),hit=[];
-  for(const v of V){let ok=true;for(const w of v.tk){if(!tx.some(x=>x===w||lev1(x,w))){ok=false;break}}if(ok)hit.push(v)}
+const OPT_T=w=>{w=w.replace(/^anti[a-z]*vandal[a-z]*$/,'antivandale').replace(/^(?:grenouilleres?)$/,'grenouillere').replace(/^(.{4,}?)(?:s|x)$/,'$1');return w};
+function detectOpts(raw){raw=String(raw).replace(/(\d)(?=mm\b)/gi,'$1 ').replace(/(\d+(?:[.,]\d+)?)\s*m(?:[èe]tres?)?(?=\s+(?:de\s+)?(?:d[ée]nud|c[âa]ble|avec))/gi,(m,n)=>Math.round(parseFloat(n.replace(',','.'))*1000)+' mm');const V=buildVoc(),tx=nz(raw).replace(/\banti (?=[a-z])/g,'anti').split(' ').filter(Boolean),hit=[];const tt=tx.map(OPT_T);
+  for(const v of V){let ok=true;for(const w of v.tk){const wt=OPT_T(w.replace(/^anti(?=vandal)/,'anti'));if(!tx.some((x,j)=>x===w||tt[j]===wt||lev1(x,w))){ok=false;break}}if(ok)hit.push(v)}
   const keep=hit.filter(a=>!hit.some(b=>b!==a&&b.tk.length>a.tk.length&&a.tk.every(w=>b.tk.some(y=>y===w||lev1(y,w)))));
   const seen=new Set(),out=[];for(const v of keep){const key=v.tk.map(w=>w.replace(/(?:es|s|e)$/,'')).join(' ');if(seen.has(key))continue;seen.add(key);out.push(v.lab)}
   return out.filter(l=>{const am=/(\d+)\s*°/.exec(l);return !am||new RegExp('(?:^|\\D)'+am[1]+'\\s*(?:°(?!\\s*c)|degr)','i').test(raw)}).filter(l=>!(/^interrupteurs?$/i.test(l)&&/interrupteurs?\s+(?:sur|du|de)\s+(?:le\s+|l['’]\s*)?(?:driver|alimentation)|multi[\s-]*puissance|power\s?-?switch/i.test(raw))).filter(l=>!(/asym/i.test(l)&&/projecteur|\bbm\d|brightmaster|evolve/i.test(raw))).filter(l=>!(/lentille/i.test(l)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw))).slice(0,8)}
 const dn=x=>nz(x).replace(/\b(couvercle|vasque|cache|globe|couverture)\b/g,'diffuseur');
 function realMiss(i,optq){const pr=picksReal(i),tx=dn((C.dl[i]||'')+' '+(C.ds[i]||'')+(C.xopal&&C.xopal[i]?' diffuseur opale':''));const sm=x=>x.replace(/semi[ -]?opale/g,'semiopale');const tx2=sm(tx);return optq.filter(q=>{const qn=dn(q.n);const cn=dn(D.col[C.col[i]]||'');if(cn&&/^(noir|blanc|gris)$/.test(qn)&&cn.startsWith(qn))return false;if(/^traversant|^cablage traversant/.test(qn)&&D.cab[C.cab[i]]==='Oui')return false;{const T2=' '+tx2+' ';if(T2.includes(' '+qn+' ')||qn.split(' ').every(w=>T2.includes(' '+w+' ')))return false}if(pr)for(let k=0;k<pr.sp.fam.length;k++){const vi=pr.sp.lists[k].indexOf(pr.vals[k]);if(vi>=0&&nz(pr.sp.attrs[k][vi].lab)===q.n)return false}return true}).map(q=>q.l)}
-const TYPEKW=[[/ruban|bandeau|\bstrip\b|guirlande|n[ée]on flex|\bw\s*\/\s*m\b|lm\s*\/\s*m\b/,'Ruban LED'],[/profil[ée]?s?\b|goulotte alu/,'Profilé LED'],[/pav[ée]|dalle|panneau|panel\b|plaque led|platine led|encastr[ée] (?:type )?\d{2,3}\s?[x×]\s?\d{2,3}/,'Dalle LED'],[/tubulaire|\btubes?\b|\bt8\b|n[ée]on\b/,'Tubulaire'],[/r[ée]glette (?:[ée]tanche|stagna)|[ée]tanche.*r[ée]glette/,'Réglette étanche'],[/r[ée]glette/,'Réglette'],[/downlight|downray|spot encastr|\bspots?\b|encastr[ée] (?:type )?(?:rond|ø)/,'Downlight'],[/hublot|tortue/,'Hublot'],[/applique/,'Applique'],[/highbay|high bay|cloche|gamelle|industriel/,'Highbay'],[/projecteur sur rail|spot sur rail|\brail\b.*(?:spot|projecteur)/,'Projecteur sur rail'],[/rail triphas/,'Rail triphasé'],[/projecteur|floodlight|\bflood\b/,'Projecteur'],[/lustre|\bpendant\b|suspension d[ée]co/,'Suspension'],[/plafonnier/,'Plafonnier'],[/lin[ée]aire/,'Linéaire'],[/[ée]clairage public|lanterne|candélabre|\bm[âa]t\b/,'Éclairage public'],[/alimentation|\bdriver\b|transformateur/,'Alimentation LED']];
+const TYPEKW=[[/ruban|bandeau|\bstrip\b|guirlande|n[ée]on flex|\bw\s*\/\s*m\b|lm\s*\/\s*m\b/,'Ruban LED'],[/profil[ée]?s?\b|goulotte alu/,'Profilé LED'],[/pav[ée]|dalle|panneau|panel\b|plaque led|platine led|encastr[ée] (?:type )?\d{2,3}\s?[x×]\s?\d{2,3}/,'Dalle LED'],[/tubulaire|\btubes?\b|\bt8\b|n[ée]on\b/,'Tubulaire'],[/r[ée]glette (?:[ée]tanche|stagna)|[ée]tanche.*r[ée]glette/,'Réglette étanche'],[/r[ée]glette/,'Réglette'],[/downlight|downray|spot encastr|\bspots?\b|encastr[ée] (?:type )?(?:rond|ø)/,'Downlight'],[/hublot|tortue/,'Hublot'],[/applique/,'Applique'],[/highbay|high bay|cloche|gamelle|industriel/,'Highbay'],[/projecteur sur rail|spot sur rail|\brail\b.*(?:spot|projecteur)/,'Projecteur sur rail'],[/rail triphas/,'Rail triphasé'],[/projecteur|floodlight|\bflood\b/,'Projecteur'],[/lustre|\bpendant\b|suspension d[ée]co/,'Suspension'],[/plafonnier/,'Plafonnier'],[/lin[ée]aire/,'Linéaire'],[/[ée]clairage public|lanterne|candélabre|\bmât\b/,'Éclairage public'],[/alimentation|\bdriver\b|transformateur/,'Alimentation LED']];
 const TCOMP={'Ruban LED':['Profilé LED'],'Tubulaire':['Réglette étanche','Linéaire','Réglette'],'Réglette étanche':['Tubulaire','Linéaire','Réglette'],'Réglette':['Réglette étanche'],'Linéaire':['Tubulaire','Réglette étanche','Suspension'],'Dalle LED':['Plafonnier','Downlight'],'Plafonnier':['Hublot','Dalle LED'],'Hublot':['Plafonnier'],'Highbay':['Suspension','Projecteur'],'Suspension':['Linéaire','Highbay']};
 const NUMRE='(\\d{1,3}(?: \\d{3})+|\\d+)';
 const NUMD='(\\d{1,3}(?: \\d{3})+|\\d+(?:[.,]\\d+)?)';
@@ -834,10 +879,12 @@ function detectSpe(raw){if(!OPT)return[];const V=buildSpe(),t=' '+nz(raw)+' ',ou
   return out.slice(0,5)}
 function parseCCTP(raw){
   let t=' '+raw.toLowerCase().replace(/[  ]/g,' ').replace(/\s+/g,' ')+' ';const o={},notes=[];
+  t=t.replace(/(?:pr[ée]c[âa]bl\w*|c[âa]ble|c[âa]blage|c[âa]bl[ée]s?)\s*(?:de\s*|:\s*)?(\d[\d .,]*\s*(?:mm|cm|m)\b)(?:\s*(?:d[ée]nud\w*|avec connecteurs?\s*(?:[ée]tanches?)?|[àa] connecteurs?|sans connecteurs?))?/g,' ').replace(/\d[\d .,]*\s*(?:mm|cm|m)\s*(?:de c[âa]ble\s*)?(?:d[ée]nud\w*|avec connecteurs?\s*(?:[ée]tanches?)?|[àa] connecteurs?)/g,' ');
   let best=-1;const tk_=t.replace(/(?:sur|du|le|la|via|avec|par|au|de|d['’]|l['’])\s*(?:le\s+|l['’]\s*)?(?:driver|alimentation|transformateur)s?/g,' ');for(const [re,ty] of TYPEKW){const m=re.exec(tk_);if(m&&(best<0||m.index<best)){best=m.index;o.type=ty}}
   if(!o.type&&/suspendu|suspension|pendulaire/.test(t)&&!/ruban|bandeau|profil/.test(t)&&!/[ée]tanch|stagn/.test(t)){o.type='Suspension';o.typeWeak=1}
   if(!o.type&&/[ée]tanch|stagn/.test(t)&&!/(?:profil|ruban|bandeau)/.test(t)&&!/alimentation|\bdriver\b/.test(t.replace(/(?:sur|du|le|la|via|avec|par|au|de|d['’]|l['’])\s*(?:le\s+|l['’]\s*)?(?:driver|alimentation)s?/g,' '))){o.type='Réglette étanche';o.typeWeak=1}
   let m;
+  const OPW=new Set();try{for(const l of detectOpts(raw))for(const w of nz(l).split(' '))if(w.length>=3)OPW.add(OPT_T(w))}catch(e){}
   t=t.replace(/\b(?:fiche|prise|connecteur)\b[^.;,()]{0,40}?\s[àa]\s*\d{2,3}\s*°/g,' ').replace(/\b(?:c[âa]ble|cha[iî]ne|cordon|cha[iî]nette)(?:\s+d['’]alimentation|\s+de suspension)?[^.;,()]{0,40}?\d[\d ,.]*\s*(?:mm|cm|m)\b/g,' ').replace(/zhaga[\s-]?book|zagha/g,'zhaga');
   {const dm=/(?:double|bi)[\s-]*asym[a-zé]*|asym[a-zé]*\s+double|\b2\s?[x×]\s?60\b/.exec(t);if(dm){o.asy='DAS';t=t.replace(dm[0],' ')}}
   {const loose=/asym|lentille/.test(t),ma=(loose?/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°?/:/(\d{2,3})\s*[x×]\s*(\d{2,3})\s*°/).exec(t)||/\bas\s?(\d{2,3})\s?[x×]?\s?(\d{2,3})\b/.exec(t);if(ma&&o.asy!=='DAS'&&+ma[1]<=150&&+ma[2]<=150&&!/^\s*mm/.test(t.slice(t.indexOf(ma[0])+ma[0].length))){o.asy='AS'+ma[1]+ma[2];t=t.replace(ma[0],' ')}
@@ -869,7 +916,7 @@ function parseCCTP(raw){
   else if(/collier/.test(t))o.fix='Colliers';
   if(/circulaire|\brond[e]?\b/.test(t)&&!/projecteur/.test(t))o.forme='circulaire';else if(/carr[ée]e?\b/.test(t))o.forme='carrée';
   {const tt=t.replace(/blanc (?:neutre|chaud|froid)/g,' ');const DW=['noir','blanc','gris','argent','alu','aluminium','inox','polycarbonate','pmma','verre','opale','prismatique','microprismatique','clair','transparent','satine','chrome','laiton','bois','anodise','lentille','symetrique','asymetrique','extensive','zhaga'];
-    const tn=' '+tt.normalize('NFD').replace(/[\u0300-\u036f]/g,'')+' ';const hits=DW.filter(w=>!(w==='asymetrique'&&o.asy)).filter(w=>!(w==='symetrique'&&/faisceau|lentille|\d\s*°/.test(tn))).filter(w=>w!=='lentille'||!(/lentilles?\s*(?:de\s*)?\d|\d\s*°|asym/.test(tn)||/projecteur|brightmaster|sport/.test(tn))).filter(w=>new RegExp('\\b'+w+'s?\\b').test(tn));const ral=[...tn.matchAll(/ral\s?(\d{4})/g)].map(x=>'RAL'+x[1]);{const ml=/\bmod[èe]les?\s+[A-Za-z0-9 ]{0,20}?(\d{3,5})\s*lm\b/i.exec(raw);if(ml)ral.push(ml[1]+'lm')}if(hits.length||ral.length)o.dw=hits.concat(ral).join(' ; ')}
+    const tn=' '+tt.normalize('NFD').replace(/[\u0300-\u036f]/g,'')+' ';const hits=DW.filter(w=>!OPW.has(w)).filter(w=>!(w==='asymetrique'&&o.asy)).filter(w=>!(w==='symetrique'&&/faisceau|lentille|\d\s*°/.test(tn))).filter(w=>w!=='lentille'||!(/lentilles?\s*(?:de\s*)?\d|\d\s*°|asym/.test(tn)||/projecteur|brightmaster|sport/.test(tn))).filter(w=>new RegExp('\\b'+w+'s?\\b').test(tn));const ral=[...tn.matchAll(/ral\s?(\d{4})/g)].map(x=>'RAL'+x[1]);{const ml=/\bmod[èe]les?\s+[A-Za-z0-9 ]{0,20}?(\d{3,5})\s*lm\b/i.exec(raw);if(ml)ral.push(ml[1]+'lm')}if(hits.length||ral.length)o.dw=hits.concat(ral).join(' ; ')}
   if(/traversant|c[âa]blage (?:en )?ligne|mise en ligne|repiquage/.test(t))o.cab='Oui';
   if(/\bclean\b|salles? blanches?|salles? propres?|clean ?room/.test(t))o.clean='Oui';
   if(/y compris (?:le )?driver|driver (?:inclus|compris|int[ée]gr[ée])|avec driver|incl\.? driver|driver incl/.test(t)&&!/sans driver/.test(t))o.drv='Oui';
@@ -885,7 +932,7 @@ function parseCCTP(raw){
       if(/forte puissance|haute puissance/.test(t))add('Special Forte Puissance');}
     if(G.length)o.gam=G.join(' ; ')}
   {const cd=detectConc(raw);if(cd)o.conc=cd}
-  {const sp_=detectSpe(raw).filter(x=>!(/lentille/i.test(x)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw)));if(sp_.length)o.spe=sp_.join(' ; ')}
+  {const sp_=detectSpe(raw).filter(x=>{const ws=nz(x).split(' ').filter(w=>/^[a-z]{4,}$/.test(w));return!(ws.length&&ws.every(w=>OPW.has(OPT_T(w))))}).filter(x=>!(/lentille/i.test(x)&&/projecteur|\bbm\d|brightmaster|\d\s*[x×]\s*\d+\s*°/i.test(raw)));if(sp_.length)o.spe=sp_.join(' ; ')}
   if(/fabriqu[ée]e? en france|made in france|origine france/.test(t))o.fr='Oui';
   if(/\benec\b/.test(t))o.enec='Oui';
   if(/[ée]clairage de secours int[ée]gr|avec secours|kit de secours|bloc de secours int[ée]gr/.test(t))o.sec='Oui';
@@ -967,7 +1014,7 @@ function sRel(v,t,full,zero){if(!(v>0))return 0.2;const d=Math.abs(v-t)/t;return
 function scoreRow(c,a){
   let sw=0,ss=0,fcap=0;const gaps=[];
   const add=(k,s,gap)=>{sw+=W[k];ss+=W[k]*s;if(s<0.999&&gap)gaps.push(gap)};
-  let tcap=0;if(c.type){const NEAR=['Tubulaire','Réglette étanche','Linéaire','Réglette'];const s=a.type===c.type?1:c.typeWeak?(c.type==='Suspension'?(a.type==='Linéaire'?0.6:a.type==='Highbay'?0.5:0):a.type==='Linéaire'?0.6:a.type==='Tubulaire'?0.45:(TCOMP[c.type]||[]).includes(a.type)?0.3:0):(NEAR.includes(c.type)&&NEAR.includes(a.type))?0.3:(TCOMP[c.type]||[]).includes(a.type)?0.3:0;add('type',s,'type '+a.type);if(a.type!==c.type&&!c.typeWeak)tcap=1}
+  let tcap=0;if(c.type){const NEAR=['Tubulaire','Réglette étanche','Linéaire','Réglette'];const rg=c.type==='Réglette'&&a.type==='Réglette étanche';const s=a.type===c.type?1:rg?0.9:c.typeWeak?(c.type==='Suspension'?(a.type==='Linéaire'?0.6:a.type==='Highbay'?0.5:0):a.type==='Linéaire'?0.6:a.type==='Tubulaire'?0.45:(TCOMP[c.type]||[]).includes(a.type)?0.3:0):(NEAR.includes(c.type)&&NEAR.includes(a.type))?0.3:(TCOMP[c.type]||[]).includes(a.type)?0.3:0;add('type',s,'type '+a.type);if(a.type!==c.type&&!c.typeWeak&&!rg)tcap=1}
   if(c.speq&&c.speq.length){const mis=a.speMiss||c.speq.map(q=>q.l),n=c.speq.length;add('spe',a.speAv?0.9:(n-mis.length)/n,a.speAv?'option spécifique à la carte (à confirmer avec SFEL) : '+c.speq.map(q=>q.l).join(', '):'option spécifique « '+mis.join(', ')+' » absente')}
   if(c.asy){const cd=String(a.code||'').toUpperCase(),tx=String(a.txt||'').toLowerCase(),dbl=/\d(?:B?DAS)\d|double asym|2x60/i.test(cd+' '+tx),as=/AS\d{3,5}|-AS\d|\dB?DAS\d|\dBAS\d|\basym/i.test(cd+' '+tx);if(c.asy==='DAS')add('asy',dbl?1:as?0.3:0,dbl?'double asymétrique':as?'asymétrique simple':'symétrique');else add('asy',cd.includes(c.asy)?1:(c.asy==='AS'&&as)?(dbl?0.8:1):as?0.4:0,'lentille '+(as?'asymétrique autre':'symétrique'))}
   if(c.cp){add('cp',String(a.code||'').toUpperCase().startsWith(c.cp)?1:0,'gamme '+String(a.code||'').slice(0,3))}
@@ -1042,7 +1089,11 @@ function cctpTop(c0){const c=Object.assign({},c0);delete c.pwid;delete c.phgt;
     let bad=false;for(let i2=0;i2<sp.L&&!bad;i2++)for(const j of sp.prev[i2])if(sp.fbn[j][i2].has(cur[j]*64+cur[i2])){bad=true;break}
     if(bad)continue;const kc=sp.fam.indexOf('Classe électrique');const code=sp.p+cur.map((v,k)=>(k===kc?speS:'')+(k===h9?'H9'+sp.lists[k][v].slice(1):sp.lists[k][v])).join('')+(kc<0?speS:'');if(!speS&&h9===false&&(CODEIDX.has(code)||sp.exclSet.has(code)))continue;
     const r=scoreRow(c,a2);cand.push({i:-1,score:r.score,gaps:r.gaps,sp,cur:cur.slice(),code,speL})}
-  cand.sort((x,y)=>y.score-x.score||(x.i>=0?0:1)-(y.i>=0?0:1));
+  if(c.gam&&!/[ée]quivalen/i.test((document.getElementById('cctpTxt')||{}).value||'')){const L=String(c.gam).split(/;/).map(x=>nz(x)).filter(Boolean),okg=r=>{const g=nz(attrsOf(r.sp?r.sp.ex:r.i).gamme);return L.some(x=>g===x)};if(cand.some(okg)){const k=cand.filter(okg);cand.length=0;cand.push(...k)}}
+  const rw=[...new Set(nz((document.getElementById('cctpTxt')||{}).value||'').split(' ').filter(w=>w.length>=4&&/^[a-z]+$/.test(w)))];
+  const subS=r=>{const d=' '+nz(C.dl[r.sp?r.sp.ex:r.i])+' ';let n=0;for(const w of rw)if(d.includes(' '+w+' '))n++;return n};
+  for(const r of cand)r.sub=subS(r);
+  cand.sort((x,y)=>y.score-x.score||y.sub-x.sub||(x.i>=0?0:1)-(y.i>=0?0:1));
   const seen=new Set(),top=[];
   for(const r of cand){if(top.length>=15)break;let id=r.i;const key=r.sp?'S'+r.sp.p:(()=>{const a=attrsOf(id);return [C.brand[id],C.gamme[id],a.len,a.wid,a.pw,a.flux,a.cct,a.ip,a.ik,a.grad].join('|')})();if(seen.has(key))continue;seen.add(key);top.push(r)}
   return top}
