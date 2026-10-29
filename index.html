@@ -93,7 +93,7 @@ tbody tr:nth-child(even){background:var(--zebra)}tbody tr{cursor:pointer}tbody t
 td.mono{font-family:var(--f-mono);font-size:12px}td.des{white-space:normal;min-width:260px;max-width:380px}td.num{text-align:right;font-variant-numeric:tabular-nums}td.long{white-space:normal;min-width:240px;max-width:420px}
 .more{display:flex;justify-content:center;margin:14px 0}
 /* fiche */
-.drawer{position:fixed;inset:0;background:rgba(5,10,20,.55);display:flex;justify-content:flex-end;z-index:30}
+.drawer{position:fixed;inset:0;background:rgba(5,10,20,.55);display:flex;justify-content:flex-end;z-index:60}
 .drawer>div{background:var(--bg);width:min(780px,100%);height:100%;overflow:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 48px 18px;border-left:1px solid var(--line)}
 .dh{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
 .dh .big{width:64px;height:64px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--bc);flex:0 0 64px}.dh .big svg{width:42px;height:42px}.dh .big.ph{width:120px;height:120px;flex:0 0 120px;padding:0;overflow:hidden}
@@ -212,6 +212,26 @@ tbody tr:hover{background:var(--soft)}
 .mlist{border-radius:var(--r-md)}
 .step h2 span{background:var(--amber);color:#181818;font-weight:600}
 .score{border-radius:999px}
+
+/* ===== Mobile : tableaux en cartes (présentation seule) ===== */
+@media (max-width:700px){
+.tablewrap{max-height:none!important;overflow:visible;border:0;background:transparent}
+.tablewrap table,.tablewrap tbody,.tablewrap tr,.tablewrap td{display:block;width:auto!important;min-width:0!important;max-width:none!important}
+.tablewrap thead{display:none}
+.tablewrap tr{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin:0 0 10px;padding:6px 14px}
+.tablewrap tbody tr:nth-child(even){background:var(--panel)}
+.tablewrap tr{display:grid!important;grid-template-columns:1fr 1fr;column-gap:14px}
+.tablewrap td{display:block;padding:6px 0!important;border:0!important;border-bottom:1px solid var(--line)!important;text-align:left;white-space:normal!important;overflow-wrap:anywhere;font-size:14px}
+.tablewrap td[data-l]::before{content:attr(data-l);display:block;color:var(--muted);font-size:11px;margin-bottom:1px}
+.tablewrap td:empty{display:none}
+.tablewrap td:nth-child(-n+4){grid-column:1/-1}
+button,.btn,.tile,.seg button,select,input{min-height:40px}
+.topbar .wrap{height:56px}nav.tabs{top:56px}
+.hero .wrap{padding-top:96px;padding-bottom:32px}
+.hero{min-height:min(60vh,520px)}
+.panel{border-radius:18px;padding:16px}
+.drawer>*{width:100%!important;max-width:100%!important}
+}
 </style>
 
 <div class="topbar" id="topbar"><div class="wrap">
@@ -1261,5 +1281,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('clic
 boot();
 
 {const tb=document.getElementById('topbar'),f=()=>tb&&tb.classList.toggle('solid',window.scrollY>40);window.addEventListener('scroll',f,{passive:true});f()}
+
+{const lab=r=>{r.querySelectorAll('table').forEach(t=>{const h=[...t.querySelectorAll('thead th')].map(x=>x.textContent);t.querySelectorAll('tbody tr').forEach(tr=>{[...tr.children].forEach((td,i)=>{if(!td.dataset.l&&h[i])td.dataset.l=h[i]})})})};let q=0;new MutationObserver(()=>{if(q)return;q=1;setTimeout(()=>{q=0;lab(document)},120)}).observe(document.body,{childList:true,subtree:true});}
 })();
 </script>
