@@ -257,8 +257,6 @@ html{-webkit-text-size-adjust:100%}
   <button role="tab" aria-selected="true" data-tab="cctp">Coller un CCTP</button>
   <button role="tab" aria-selected="false" data-tab="search">Recherche produits</button>
   <button role="tab" aria-selected="false" data-tab="conc">Recherche par concurrent</button>
-  <button role="tab" aria-selected="false" data-tab="cfg">Construire une référence SFEL</button>
-  <button role="tab" aria-selected="false" data-tab="opts">Options du catalogue SFEL</button>
 </nav>
 <div id="load"><p>Chargement du catalogue…</p><progress id="prog" max="100" value="5"></progress></div>
 
@@ -273,6 +271,7 @@ html{-webkit-text-size-adjust:100%}
 </main>
 
 <main id="tab-search" class="hidden">
+  <section class="panel refs" aria-label="Recherche par référence"><label class="f">Rechercher par référence<input id="refq" type="search" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ex. PRO12404PC, BM2-1503110GR, TUT112B4H40C1TRE2BL"></label><p class="note" id="refinfo">Référence complète ou début de référence (tirets et espaces ignorés), références SFEL générées comprises. Quand ce champ est rempli, les critères ci-dessous sont ignorés.</p></section>
   <div class="tiles" id="tiles" aria-label="Types de produit"></div>
   <section class="panel" aria-label="Critères">
     <div class="fhead"><h2 style="margin:0">Critères</h2><div style="display:flex;gap:8px"><button class="btn" id="toggleAdv">Masquer les critères</button><button class="btn" id="reset">Tout effacer</button></div></div>
@@ -485,7 +484,7 @@ async function boot(){
     try{const X=await getJSON('data/extra.json');for(const k of ['cl','gw','life','ang','sdcm','gr','gar','fr','van','sec','cut','pf','volt','fix','forme','cutlo','cuthi','cutt','opal','enec','ral']){C['x'+k]=X[k]||new Array(N).fill(-1);KEYS.push('x'+k)}for(const k of ['pslo','pshi','fllo','flhi','stp'])C['x'+k]=X[k]||[];D.xstpd=X.stpd||[''];D.xvolt=X.voltd;D.xfix=X.fixd;D.xforme=X.formed;D.xcutt=X.cuttd;D.xral=X.rald||['']}catch(e){for(const k of ['cl','gw','life','ang','sdcm','gr','gar','fr','van','sec','cut','pf','volt','fix','forme','cutlo','cuthi','cutt','enec']){C['x'+k]=new Array(N).fill(-1);KEYS.push('x'+k)}D.xvolt=[''];D.xfix=[''];D.xforme=[''];D.xcutt=['']}
     N0=N;prog(85);FILES=await getJSON('data/files.json');OPT=await getJSON('data/options.json');initVirtual(await getJSON('data/gen.json'));prog(100);
     $('#load').classList.add('hidden');$('#tab-cctp').classList.remove('hidden');
-    hero();buildFilters();run();buildOpts();buildCfg();buildCctp();
+    hero();buildFilters();{const rq=document.getElementById('refq');let tt;rq.addEventListener('input',()=>{clearTimeout(tt);tt=setTimeout(()=>{REFQ=rq.value.trim();run()},200)})}run();buildOpts();buildCfg();buildCctp();
     getJSON('data/ft.json').then(l=>{FTSET=new Set(l)}).catch(()=>{});getJSON('data/links.json').then(l=>{LINKS=l;draw()}).catch(()=>{});
   }catch(e){$('#load').innerHTML='<p>Le catalogue n\'a pas pu être chargé ('+e.message+'). Rechargez la page.</p>'}
 }
@@ -581,7 +580,31 @@ function buildGammeOpts(){
   updateScope();
 }
 let RES=[],SHOW=100,TCOUNT=new Map();
+let REFQ='',REFV=[];
+const strip=x=>String(x||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+function refSearch(q){
+  const out=[],vv=[];let info='';const qn=strip(q);
+  if(qn.length<2)return {out,vv,info:''};
+  const pre=[],sub=[];for(let i=0;i<N0;i++){const c=strip(C.code[i]);if(c.startsWith(qn))pre.push(i);else if(qn.length>=3&&c.includes(qn))sub.push(i)}
+  out.push(...pre,...sub);
+  const seen=new Set(out.map(i=>C.code[i]));const mods=new Set();
+  for(const sp of SPECS){const pn=strip(sp.p);if(!pn)continue;
+    if(pn.startsWith(qn)||qn.startsWith(pn)){mods.add(sp.p+' ('+sp.g+')')}
+    if(!qn.startsWith(pn))continue;const rest=qn.slice(pn.length);const L=sp.order.length;
+    const sols=[];const cur=[];
+    const rec=(k,pos)=>{if(sols.length>=3)return;if(k===L){if(pos===rest.length)sols.push(cur.slice());return}
+      const li=sp.lists[k];for(let a=0;a<li.length;a++){const v=strip(li[a]);if(v&&!rest.startsWith(v,pos))continue;
+        let bad=false;for(let j=0;j<k&&!bad;j++){const f=sp.fbn[j][k];if(f&&f.has(cur[j]*64+a))bad=true}if(bad)continue;
+        cur[k]=a;rec(k+1,pos+v.length)}};
+    rec(0,0);
+    for(const c of sols){const code=sp.p+c.map((a,k)=>sp.lists[k][a]||'').join('');if(sp.exclSet.has(code)||seen.has(code))continue;seen.add(code);vv.push({sp,cur:c.slice(),code})}}
+  if(!out.length&&!vv.length)info=mods.size?'Aucune référence complète trouvée. Modèles SFEL commençant par cette saisie : '+[...mods].slice(0,8).join(', ')+'. Complétez la référence.':'Aucune référence ne correspond.';
+  else if(vv.length&&!out.length)info='Référence SFEL générée à partir des options du catalogue (à confirmer avec SFEL).';
+  else if(mods.size&&out.length>=1&&!vv.length&&qn.length<12)info='Début de référence : modèles SFEL possibles : '+[...mods].slice(0,8).join(', ')+'.';
+  return {out,vv,info}}
 function run(){
+  if(REFQ){const R=refSearch(REFQ);RES=R.out;REFV=R.vv;VSEG=[];VTOT=R.vv.length;SHOW=100;TCOUNT=new Map();tiles();draw();const ri=document.getElementById('refinfo');if(ri)ri.textContent=R.info||'Référence complète ou début de référence (tirets et espaces ignorés), références SFEL générées comprises. Quand ce champ est rempli, les critères ci-dessous sont ignorés.';return}
+  REFV=[];
   const g=val,n=numv,ix=(k,nm)=>g(k)===''?-1:D[nm].indexOf(g(k));
   const b=ix('brand','brand'),t=ix('type','type'),ga=ix('gamme','gamme'),po=ix('pos','pos'),co=ix('col','col'),de=ix('det','det'),cab=ix('cab','cab'),mc=ix('matc','matc');
   const opt=g('opt'),optI=opt===''?-1:D.opt.indexOf(opt),mdI=opt===''?-1:D.matd.indexOf(opt);
@@ -750,6 +773,7 @@ function cell(c,i){const v=c[1](i),td=el('td'),k=c[2]||'';
   else{td.textContent=v==null?'':v;if(k)td.className=k}return td}
 function viewRows(m){
   const ids=RES.slice(0,m);let need=m-ids.length,slot=0;
+  if(REFQ){for(const v of REFV){if(need<=0||slot>=SLOTMAX)break;ids.push(materialize(v.sp,v.cur,v.code,slot++));need--}return ids}
   for(const seg of VSEG){if(need<=0||slot>=SLOTMAX)break;const take=Math.min(need,seg.cnt,SLOTMAX-slot),res=[];
     const f=seg.f||{allow:seg.sp.all,masks:null,m0:0};
     walk(seg.sp,f.allow,f.masks,f.m0,seg.full||0,(cur,code)=>{res.push([cur.slice(),code]);return res.length>=take});
@@ -761,7 +785,7 @@ function draw(){
   if(VIEW==='cards'){const cc=$('#cards');cc.textContent='';const fr_=document.createDocumentFragment();for(const i of ids)fr_.append(card(i));cc.append(fr_)}
   else{const th=$('#tbl thead'),tb=$('#tbl tbody');if(!th.firstChild)th.append(el('tr',null,el('th',{text:'N°'}),COLS.map(c=>el('th',{text:c[0]}))));tb.textContent='';
     const f=document.createDocumentFragment();ids.forEach((i,r)=>{const tr=el('tr',{tabindex:'0'},el('td',{class:'num',text:String(r+1)}),COLS.map(c=>cell(c,i)));tr.onclick=()=>openRef(i);tr.onkeydown=e=>{if(e.key==='Enter')openRef(i)};f.append(tr)});tb.append(f)}
-  $('#count').textContent=total===0?'Aucun produit ne correspond : essayez de retirer un critère.':fr(total)+(total===1?' produit':' produits');
+  $('#count').textContent=total===0?(REFQ?'Aucune référence trouvée.':'Aucun produit ne correspond : essayez de retirer un critère.'):fr(total)+(total===1?' produit':' produits');
   $('#hint').textContent=total>m?'· '+fr(m)+' affichés'+(m>=RES.length+SLOTMAX?' (limite d\'affichage : affinez les critères)':''):'';
   $('#more').parentElement.classList.toggle('hidden',total<=m||m>=RES.length+SLOTMAX);
 }
@@ -859,8 +883,7 @@ async function openRef(i){
   body.append(siteBox(i));
   try{const mb=await mediaBox(i);if(mb)body.append(mb);if(PH){const bg=body.querySelector('.dh .big');if(bg){const ic=bg.innerHTML,im=el('img',{src:PH,alt:'',referrerpolicy:'no-referrer',style:'width:100%;height:100%;object-fit:contain;border-radius:12px;background:#fff'});im.onerror=()=>{bg.innerHTML=ic;bg.classList.remove('ph')};bg.innerHTML='';bg.classList.add('ph');bg.append(im)}}}catch(e){}
   const l=linkOf(i);if(l)body.append(linkBlock(l));
-  if(i<N0&&b==='SFEL'&&specFor(D.gamme[C.gamme[i]],C.code[i]))body.append(el('button',{class:'btn pri',style:'margin-bottom:12px',onclick:()=>{close();cfgFromRef(i)},text:'Modifier les options de cette référence'}));
-  try{const cb=await compatBlock(i);if(cb)body.append(cb)}catch(e){}
+    try{const cb=await compatBlock(i);if(cb)body.append(cb)}catch(e){}
   body.append(el('section',{class:'panel',style:'margin:12px 0'},el('h2',{text:i>=N0?'Fiche de la référence existante la plus proche':'Fiche complète'}),el('dl',{class:'kv'},Object.keys(o).filter(k=>!HIDE.has(k)).map(k=>[el('dt',{text:k}),el('dd',{text:o[k]})]))));
 }
 /* ---------- constructeur de référence (piloté par les modèles du catalogue) ---------- */
@@ -1283,7 +1306,7 @@ function showConc(){
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
-  for(const t of ['cctp','search','conc','cfg','opts'])$('#tab-'+t).classList.toggle('hidden',b.dataset.tab!==t);if(b.dataset.tab==='conc')initConc()}));
+  for(const t of ['cctp','search','conc'])$('#tab-'+t).classList.toggle('hidden',b.dataset.tab!==t);if(b.dataset.tab==='conc')initConc()}));
 boot();
 
 {const tb=document.getElementById('topbar'),f=()=>tb&&tb.classList.toggle('solid',window.scrollY>40);window.addEventListener('scroll',f,{passive:true});f()}
