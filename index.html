@@ -1122,7 +1122,7 @@ function buildCctp(){
     c.addEventListener(kind==='n'||kind==='t'?'input':'change',()=>{clearTimeout(tmr);tmr=setTimeout(cctpMatch,200)});
     const lb=el('label',{class:'f'},el('span',{text:l}),c);lb.dataset.k=k;box.append(lb);
   }
-  const load=(o,notes,raw)=>{CCTPWEAK=o.typeWeak?o.type:null;if(raw!=null){const op=detectOpts(raw);if(op.length)o.opts=op.join(' ; ')}for(const [k] of CRIT){const c=$('#cc_'+k);c.value=o[k]!=null?String(o[k]):''}CCTPNOTES=notes||[];cctpMatch()};
+  const load=(o,notes,raw)=>{if(raw!=null)REFHITS=findRefs(raw);CCTPWEAK=o.typeWeak?o.type:null;if(raw!=null){const op=detectOpts(raw);if(op.length)o.opts=op.join(' ; ')}for(const [k] of CRIT){const c=$('#cc_'+k);c.value=o[k]!=null?String(o[k]):''}CCTPNOTES=notes||[];cctpMatch()};
   $('#cctpGo').onclick=async()=>{
     try{await initConc()}catch(e){}
     const raw=$('#cctpTxt').value,sum=$('#cctpSum');sum.textContent='';
@@ -1136,7 +1136,7 @@ function buildCctp(){
     sum.append(el('div',{class:'bar'},el('span',{class:'n',text:bl.length+' lignes détectées'}),el('span',{class:'note',text:'Cliquez sur une ligne pour voir le détail des correspondances.'})),
       el('div',{class:'tablewrap',style:'max-height:340px'},el('table',null,el('thead',null,el('tr',null,['Ligne','Texte','Critères retenus','Meilleur produit','Score'].map(h=>el('th',{text:h})))),tb)));
     load(bl[0].o,bl[0].notes,bl[0].txt)};
-  $('#cctpClear').onclick=()=>{$('#cctpSum').textContent='';$('#cctpTxt').value='';for(const [k] of CRIT)$('#cc_'+k).value='';CCTPNOTES=[];cctpMatch()};
+  $('#cctpClear').onclick=()=>{REFHITS=[];$('#cctpSum').textContent='';$('#cctpTxt').value='';for(const [k] of CRIT)$('#cc_'+k).value='';CCTPNOTES=[];cctpMatch()};
   $('#cctpTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))$('#cctpGo').click()});
 }
 let CCTPNOTES=[];
@@ -1197,6 +1197,28 @@ function pwRange(i){const m=/(\d{1,3}(?:\s*w?\s*-\s*\d{1,3})+)\s*w\b/i.exec(C.dl
 const STC={};function stepsOf(i){const k=C.xstp&&C.xstp[i];if(!k)return null;if(!STC[k])STC[k]=D.xstpd[k].split(';').map(x=>x.split(':').map(Number));return STC[k]}
 function stepW(i){const s=stepsOf(i);return s?s.map(x=>x[0]).join(' / '):null}function stepL(i){const s=stepsOf(i);return s?s.map(x=>fr(x[1])).join(' / '):null}
 function attrsOf(i){const pr=(C.xpslo&&C.xpslo[i]>0)?[C.xpslo[i],C.xpshi[i]]:pwRange(i);const fl=(C.xfllo&&C.xfllo[i]>0)?[C.xfllo[i],C.xflhi[i]]:null;const gm=D.gamme[C.gamme[i]],br=D.brand[C.brand[i]],isD=D.type[C.type[i]]==='Dalle LED';return {steps:stepsOf(i),fllo:fl?fl[0]:0,flhi:fl?fl[1]:0,code:C.code[i],cab:D.cab[C.cab[i]],brand:br,gamme:gm,drv:isD?((br!=='Integratech'||/^(SCLEAN|SCLEAN S|LED panel Quadra)$/.test(gm))?1:0):-1,clean:/^(SCLEAN|SCLEAN S|OPALI)$/.test(gm)?1:0,pwlo:pr?pr[0]:0,pwhi:pr?pr[1]:0,cutlo:C.xcutlo[i],cuthi:C.xcuthi[i],cutt:D.xcutt[C.xcutt[i]],fixv:D.xfix[C.xfix[i]]||(D.type[C.type[i]]==='Dalle LED'?(D.gamme[C.gamme[i]]==='SCLEAN S'?'plafonnier':'encastré'):''),formev:D.xforme[C.xforme[i]],dtx:nz((C.dl[i]||'')+' '+(/^PHB(?:P3|S3)$/.test(gm)&&D.type[C.type[i]]==='Highbay'?'zhaga ':'')+((D.xral&&C.xral&&D.xral[C.xral[i]])||'')+' '+(D.col[C.col[i]]||'')+' '+(D.matd[C.matd[i]]||'')+' '+(D.matc[C.matc[i]]||'')),cl:['','I','II','III'][C.xcl[i]],gw:C.xgw[i],life:C.xlife[i],ang:C.xang[i],sdcm:C.xsdcm[i],gr:C.xgr[i],gar:C.xgar[i],fr:C.xfr[i],van:C.xvan[i],sec:C.xsec[i],enec:C.xenec?C.xenec[i]:-1,txt:(C.dl[i]||'')+' '+(C.ds[i]||'').toLowerCase()+(C.xopal&&C.xopal[i]?' diffuseur opale':'')+' '+(D.xvolt[C.xvolt[i]]||'').toLowerCase(),hgt:C.h[i],type:D.type[C.type[i]],len:C.l[i]||C.w[i],wid:C.l[i]?C.w[i]:0,dia:diaOf(i),pw:C.pw[i],flux:C.flux[i],eff:C.eff[i],cct:D.cct[C.cct[i]],irc:C.irc[i],ip:C.ip[i],ik:C.ik[i],ugr:C.ugr[i],grad:D.grad[C.grad[i]]}}
+/* Références saisies dans le texte du CCTP : correspondance exacte (tirets/espaces/casse ignorés), références SFEL générées comprises */
+let REFHITS=[],STRIPIDX=null;
+function refVirt(qn){const vv=[],seen=new Set();
+  for(const sp of SPECS){const pn=strip(sp.p);if(!pn||!qn.startsWith(pn))continue;const rest=qn.slice(pn.length),L=sp.order.length,sols=[],cur=[];
+    const rec=(k,pos)=>{if(sols.length>=2)return;if(k===L){if(pos===rest.length)sols.push(cur.slice());return}
+      const li=sp.lists[k];for(let a=0;a<li.length;a++){const v=strip(li[a]);if(v&&!rest.startsWith(v,pos))continue;let bad=false;for(let j=0;j<k&&!bad;j++){const f=sp.fbn[j][k];if(f&&f.has(cur[j]*64+a))bad=true}if(bad)continue;cur[k]=a;rec(k+1,pos+v.length)}};
+    rec(0,0);
+    for(const c of sols){const code=sp.p+c.map((a,k)=>sp.lists[k][a]||'').join('');if(sp.exclSet.has(code)||seen.has(code))continue;seen.add(code);vv.push({i:-1,sp,cur:c.slice(),code,score:100,gaps:['référence SFEL générée à partir des options du catalogue : à confirmer avec SFEL']})}}
+  return vv}
+function findRefs(raw){
+  if(!STRIPIDX){STRIPIDX=new Map();for(let i=0;i<N0;i++){const k=strip(C.code[i]);if(k.length<5)continue;if(!STRIPIDX.has(k))STRIPIDX.set(k,[]);STRIPIDX.get(k).push(i)}}
+  const out=[],seen=new Set();
+  {const t1=String(raw||'').trim();if(t1&&!/\s/.test(t1)){const q1=strip(t1);if(q1.length>=3){for(const [k,ix] of STRIPIDX)if(k.startsWith(q1))for(const i of ix){out.push({i,score:q1.length>=6?95:90,gaps:['début de référence saisi : '+q1+'…']});if(out.length>=60)break}
+      if(out.length){const ex=STRIPIDX.get(q1);if(ex)for(const o of out)if(strip(C.code[o.i])===q1)o.score=100;return out}}}}
+  const toks=String(raw||'').match(/[A-Za-z0-9][A-Za-z0-9\-_.\/]{4,}[A-Za-z0-9]/g)||[];
+  for(const t0 of toks){for(const t of new Set([t0,...t0.split(/[\/_]/)])){const q=strip(t);if(q.length<6||!/\d/.test(q))continue;
+    const h=STRIPIDX.get(q);
+    if(h){for(const i of h){if(!seen.has(C.code[i])){seen.add(C.code[i]);out.push({i,score:100,gaps:[]})}}}
+    else{const vs=refVirt(q);for(const v of vs){if(!seen.has(v.code)){seen.add(v.code);out.push(v)}}
+      if(!vs.length&&q.length>=8&&/[A-Z]/.test(q)){const pm=[];for(const [k,ix] of STRIPIDX)if(k.startsWith(q)){pm.push(...ix);if(pm.length>8)break}
+        if(pm.length&&pm.length<=8)for(const i of pm)if(!seen.has(C.code[i])){seen.add(C.code[i]);out.push({i,score:95,gaps:['début de référence saisi : '+q+'…']})}}}}}
+  return out.slice(0,12)}
 function cctpTop(c0){const c=Object.assign({},c0);delete c.pwid;delete c.phgt;
   if(c.type==='Bloc de secours'){const g=D.gamme.indexOf('Blocs de secours'),o=[];for(let i=0;i<N0;i++)if(C.gamme[i]===g)o.push({i,score:25,gaps:['unité de secours pour driver, pas un BAES/SATI certifié'],sp:null});return o}
   const cand=[];const bOnly=c.brand&&!/[ée]quivalen/i.test((document.getElementById('cctpTxt')||{}).value||'');const bn=bOnly?nz(c.brand):'';
@@ -1236,9 +1258,10 @@ function cctpMatch(){
   const res=$('#cctpRes');res.textContent='';
   const c=cctpCrit(),keys=Object.keys(c).filter(k=>CRIT.some(x=>x[0]===k));
   pillVis();
-  if(!keys.length){return}
-  const top=cctpTop(c);
-  const crit=keys.map(k=>CRIT.find(x=>x[0]===k)[1]+' '+c[k]).join(' · ');
+  if(!keys.length&&!REFHITS.length){return}
+  let top=keys.length?cctpTop(c):[];
+  if(REFHITS.length){const hc=new Set(REFHITS.map(h=>h.i>=0?C.code[h.i]:h.code));top=REFHITS.concat(top.filter(r=>!hc.has(r.i>=0?C.code[r.i]:r.code)))}
+  const crit=(REFHITS.length?'référence trouvée dans le texte : '+REFHITS.map(h=>h.i>=0?C.code[h.i]:h.code).join(', ')+(keys.length?' · ':''):'')+keys.map(k=>CRIT.find(x=>x[0]===k)[1]+' '+c[k]).join(' · ');
   res.append(el('div',{class:'bar'},el('span',{class:'n',text:'Meilleures correspondances'}),el('span',{class:'note',text:'Critères pris en compte : '+crit})));
   if(CCTPNOTES.length)res.append(el('p',{class:'note',text:'Attention : '+CCTPNOTES.join(' ; ')+'.'}));
   let slot=0;
